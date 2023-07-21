@@ -1,12 +1,12 @@
 // ### Project Information #############################################################################################
-private class ProjectInfo { // TODO change project info
-    val longName: String = "Scala 3 Project Template"
-    val description: String = "A template for configuring Scala 3 projects."
+private class ProjectInfo {
+    val longName: String = "Chess Game Service"
+    val description: String = "A service which handles the configuration, execution and termination of chess games."
 
-    val repositoryOwner: String = "jahrim"
-    val repositoryName: String = "scala3-project-template"
+    val repositoryOwner: String = "ldss-project"
+    val repositoryName: String = "chess-game-service"
 
-    val artifactGroup: String = "io.github.jahrim"
+    val artifactGroup: String = "io.github.jahrim.chess"
     val artifactId: String = project.name
     val implementationClass: String = "main.main"
 
@@ -14,7 +14,7 @@ private class ProjectInfo { // TODO change project info
     val licenseUrl = "https://opensource.org/licenses/MIT"
 
     val website = "https://github.com/$repositoryOwner/$repositoryName"
-    val tags = listOf("scala3", "project template")
+    val tags = listOf("scala3", "chess", "game")
 }
 private val projectInfo: ProjectInfo = ProjectInfo()
 
@@ -37,6 +37,8 @@ dependencies {
     compileOnly(libs.bundles.scalafmt)
     implementation(libs.scala)
     implementation(libs.scallop)
+    implementation(libs.hexarc)
+    implementation(libs.vertx.web)
     testImplementation(libs.scalatest)
     testImplementation(libs.scalatestplusjunit)
 }
@@ -79,12 +81,16 @@ publishing {
     publications {
         withType<MavenPublication> {
             pom {
-                // TODO change developers
                 developers {
                     developer {
                         name.set("Jahrim Gabriele Cesario")
                         email.set("jahrim.cesario2@studio.unibo.it")
                         url.set("https://jahrim.github.io")
+                    }
+                    developer {
+                        name.set("Madina Kentpayeva")
+                        email.set("madina.kentpayeva@studio.unibo.it")
+                        url.set("https://madina9229.github.io")
                     }
                 }
             }
