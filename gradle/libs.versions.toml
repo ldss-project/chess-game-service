@@ -10,6 +10,7 @@ publish-on-central-version = "5.0.7"                # simplifies publishing arti
 hexarc-version = "0.4.1"                            # hexagonal architecture framework
 vertx-web-version = "4.4.4"                         # event-loop architecture framework
 scallop-version = "4.1.0"                           # cli argument parser for scala
+chess-engine-version = "0.6.0"                      # chess engine
 # insert the version of the dependencies here...
 
 [libraries]
@@ -21,6 +22,7 @@ scalafmt-config = { module = "org.scalameta:scalafmt-config_2.13", version.ref =
 scallop = { module = "org.rogach:scallop_3", version.ref = "scallop-version" }
 vertx-web = { module = "io.vertx:vertx-web", version.ref = "vertx-web-version" }
 hexarc = { module = "io.github.jahrim:hexarc", version.ref = "hexarc-version" }
+chess-engine = { module = "io.github.jahrim.chess:chess", version.ref = "chess-engine-version" }
 # insert the dependencies here...
 
 [bundles]
