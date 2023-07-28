@@ -1,4 +1,4 @@
-package main
+package io.github.jahrim.chess.game.service.main
 
 import org.rogach.scallop.*
 
