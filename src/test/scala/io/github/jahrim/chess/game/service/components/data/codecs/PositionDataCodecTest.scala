@@ -5,7 +5,12 @@ import io.github.jahrim.chess.game.service.components.data.PositionData
 import io.github.jahrim.chess.game.service.components.data.codecs.FileCodec.given
 import io.github.jahrim.chess.game.service.components.data.codecs.PositionCodec.given
 import io.github.jahrim.chess.game.service.components.data.codecs.RankCodec.given
-import io.github.jahrim.hexarc.persistence.bson.codecs.{BsonDecoder, BsonDocumentDecoder, BsonDocumentEncoder, BsonEncoder}
+import io.github.jahrim.hexarc.persistence.bson.codecs.{
+  BsonDecoder,
+  BsonDocumentDecoder,
+  BsonDocumentEncoder,
+  BsonEncoder
+}
 import io.github.jahrim.hexarc.persistence.bson.dsl.BsonDSL.{*, given}
 import org.bson.BsonDocument
 import org.bson.conversions.Bson

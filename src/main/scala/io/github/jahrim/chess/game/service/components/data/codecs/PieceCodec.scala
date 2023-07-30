@@ -6,6 +6,8 @@ import io.github.jahrim.hexarc.persistence.bson.codecs.{BsonDocumentDecoder, Bso
 import PieceCodec.given
 import PositionCodec.given
 import PieceTypeDataCodec.given
+import FileCodec.given
+import RankCodec.given
 import io.github.jahrim.hexarc.persistence.bson.dsl.BsonDSL.{*, given}
 
 /** [[Bson]] codec for [[PieceData]] */
