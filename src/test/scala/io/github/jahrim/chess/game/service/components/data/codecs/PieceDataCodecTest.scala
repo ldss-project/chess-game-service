@@ -5,9 +5,9 @@ import io.github.jahrim.chess.game.service.components.data.PositionData
 import io.github.jahrim.chess.game.service.components.data.PieceData
 import io.github.jahrim.chess.game.service.components.data.PieceTypeData
 import io.github.jahrim.chess.game.service.components.data.codecs.FileCodec.given
-import io.github.jahrim.chess.game.service.components.data.codecs.PositionCodec.given
+import io.github.jahrim.chess.game.service.components.data.codecs.PositionDataCodec.given
 import io.github.jahrim.chess.game.service.components.data.codecs.RankCodec.given
-import io.github.jahrim.chess.game.service.components.data.codecs.PieceCodec.given
+import io.github.jahrim.chess.game.service.components.data.codecs.PieceDataCodec.given
 import io.github.jahrim.chess.game.service.components.data.codecs.PieceTypeDataCodec.given
 import io.github.jahrim.hexarc.persistence.bson.codecs.{
   BsonDecoder,

@@ -6,11 +6,11 @@ import org.bson.conversions.Bson
 import io.github.jahrim.chess.game.service.components.data.GameConfigurationData
 import io.github.jahrim.chess.game.service.components.data.TimeConstraintData
 
-import TimeConstraintCodec.given
-import GameConfigurationCodec.given
+import TimeConstraintDataCodec.given
+import GameConfigurationDataCodec.given
 
 /** [[Bson]] codec for [[GameConfigurationData]]. */
-object GameConfigurationCodec:
+object GameConfigurationDataCodec:
   /** A given [[BsonDocumentDecoder]] for [[GameConfigurationData]]. */
   given bsonToGameConfiguration: BsonDocumentDecoder[GameConfigurationData] = bson =>
     GameConfigurationData(

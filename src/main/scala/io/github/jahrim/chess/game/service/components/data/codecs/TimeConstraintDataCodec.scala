@@ -11,7 +11,7 @@ import scala.concurrent.duration.Duration
 import io.github.jahrim.chess.game.service.components.data.TimeConstraintTypeData
 
 /** [[Bson]] codec for [[TimeConstraintData]]. */
-object TimeConstraintCodec:
+object TimeConstraintDataCodec:
   /** A given [[BsonDocumentDecoder]] for [[TimeConstraintData]]. */
   given bsonToTimeConstraint: BsonDocumentDecoder[TimeConstraintData] = bson =>
     TimeConstraintData(

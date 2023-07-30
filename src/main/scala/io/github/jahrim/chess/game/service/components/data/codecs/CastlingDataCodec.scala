@@ -4,10 +4,10 @@ import org.bson.conversions.Bson
 import io.github.jahrim.chess.game.service.components.data.{CastlingData, PositionData, RookData}
 import io.github.jahrim.hexarc.persistence.bson.codecs.{BsonDocumentDecoder, BsonDocumentEncoder}
 import io.github.jahrim.hexarc.persistence.bson.dsl.BsonDSL.{*, given}
-import PositionCodec.given
+import PositionDataCodec.given
 
 /** [[Bson]] codec for [[CastlingData]]. */
-object CastlingCodec:
+object CastlingDataCodec:
   /** A given [[BsonDocumentDecoder]] for [[CastlingData]]. */
   given bsonToCastling: BsonDocumentDecoder[CastlingData] = bson =>
     CastlingData(

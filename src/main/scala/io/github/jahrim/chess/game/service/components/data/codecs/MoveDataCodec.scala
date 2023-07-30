@@ -10,11 +10,11 @@ import io.github.jahrim.chess.game.service.components.data.{
 import io.github.jahrim.hexarc.persistence.bson.codecs.{BsonDocumentDecoder, BsonDocumentEncoder}
 import org.bson.conversions.Bson
 import io.github.jahrim.hexarc.persistence.bson.dsl.BsonDSL.{*, given}
-import MoveTypeCodec.given
+import MoveTypeDataCodec.given
 import MoveDataCodec.given
-import PositionCodec.given
-import CastlingCodec.given
-import EnPassantCodec.given
+import PositionDataCodec.given
+import CastlingDataCodec.given
+import EnPassantDataCodec.given
 
 /** [[Bson]] codec for [[MoveData]]. */
 object MoveDataCodec:
