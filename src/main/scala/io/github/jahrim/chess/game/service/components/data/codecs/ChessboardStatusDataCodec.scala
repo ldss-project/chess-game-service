@@ -4,13 +4,13 @@ import io.github.jahrim.chess.game.service.components.data.ChessboardStatusData
 import io.github.jahrim.hexarc.persistence.bson.codecs.{BsonDocumentDecoder, BsonDocumentEncoder}
 import org.bson.conversions.Bson
 import io.github.jahrim.hexarc.persistence.bson.dsl.BsonDSL.{*, given}
-import PieceCodec.given
+import PieceDataCodec.given
 import MoveDataCodec.given
 import io.github.jahrim.chess.game.service.components.data.PieceData
 import io.github.jahrim.chess.game.service.components.data.MoveData
 
 /** [[Bson]] codec for [[ChessboardStatusData]] */
-object ChessboardStatusCodec:
+object ChessboardStatusDataCodec:
 
   /** A given [[BsonDocumentDecoder]] for [[ChessboardStatusData]] */
   given BsonDocumentDecoder[ChessboardStatusData] = bson =>

@@ -10,7 +10,7 @@ import io.github.jahrim.chess.game.service.util.extension.VertxFutureExtension.*
 import io.github.jahrim.chess.game.service.util.extension.JsonObjectExtension.*
 import io.github.jahrim.chess.game.service.util.extension.RoutingContextExtension.*
 import io.github.jahrim.chess.game.service.components.data.GameConfigurationData
-import io.github.jahrim.chess.game.service.components.data.codecs.TimeConstraintCodec
+import io.github.jahrim.chess.game.service.components.data.codecs.TimeConstraintDataCodec
 import io.vertx.core.Handler
 import io.github.jahrim.hexarc.persistence.bson.dsl.BsonDSL.{*, given}
 import io.vertx.core.http.{HttpServerOptions, HttpServerResponse}

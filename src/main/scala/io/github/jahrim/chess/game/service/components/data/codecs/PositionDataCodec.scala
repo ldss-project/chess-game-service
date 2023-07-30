@@ -10,7 +10,7 @@ import io.github.chess.engine.model.board.Rank
 import io.github.jahrim.hexarc.persistence.bson.dsl.BsonDSL.{*, given}
 
 /** [[Bson]] codec for [[PositionData]] */
-object PositionCodec:
+object PositionDataCodec:
   /** A given [[BsonDocumentDecoder]] for [[PositionData]] */
   given bsonToPosition: BsonDocumentDecoder[PositionData] = bson =>
     PositionData(

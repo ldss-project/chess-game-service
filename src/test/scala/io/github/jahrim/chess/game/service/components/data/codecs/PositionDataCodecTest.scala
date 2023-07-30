@@ -3,7 +3,7 @@ package io.github.jahrim.chess.game.service.components.data.codecs
 import io.github.chess.engine.model.board.{File, Rank}
 import io.github.jahrim.chess.game.service.components.data.PositionData
 import io.github.jahrim.chess.game.service.components.data.codecs.FileCodec.given
-import io.github.jahrim.chess.game.service.components.data.codecs.PositionCodec.given
+import io.github.jahrim.chess.game.service.components.data.codecs.PositionDataCodec.given
 import io.github.jahrim.chess.game.service.components.data.codecs.RankCodec.given
 import io.github.jahrim.hexarc.persistence.bson.codecs.{
   BsonDecoder,
@@ -16,7 +16,6 @@ import org.bson.BsonDocument
 import org.bson.conversions.Bson
 import test.AbstractTest
 
-/** Template test. */
 class PositionDataCodecTest extends AbstractTest:
 
   before {}

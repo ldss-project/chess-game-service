@@ -9,11 +9,11 @@ import io.github.jahrim.hexarc.persistence.bson.codecs.{
 import org.bson.conversions.Bson
 import io.github.jahrim.chess.game.service.components.data.{PositionData, RookData}
 import io.github.jahrim.hexarc.persistence.bson.dsl.BsonDSL.{*, given}
-import RookCodec.given
-import PositionCodec.given
+import RookDataCodec.given
+import PositionDataCodec.given
 
 /** [[Bson]] codec for [[RookData]]. */
-object RookCodec:
+object RookDataCodec:
   /** A given [[BsonDocumentDecoder]] for [[RookData]]. */
   given bsonToRook: BsonDocumentDecoder[RookData] = bson =>
     RookData(

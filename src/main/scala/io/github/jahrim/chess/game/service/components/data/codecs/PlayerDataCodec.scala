@@ -12,7 +12,7 @@ import io.github.jahrim.hexarc.persistence.bson.dsl.BsonDSL.{*, given}
 
 /** [[Bson]] codec for [[PlayerData]]. */
 
-object PlayerCodec:
+object PlayerDataCodec:
   /** A given [[BsonDocumentDecoder]] for [[PlayerData]]. */
   given bsonToPlayer: BsonDocumentDecoder[PlayerData] = bson =>
     PlayerData(

@@ -5,7 +5,7 @@ import io.github.jahrim.hexarc.persistence.bson.codecs.{BsonDecoder, BsonEncoder
 import org.bson.BsonString
 import io.github.jahrim.hexarc.persistence.bson.dsl.BsonDSL.{*, given}
 
-object MoveTypeCodec:
+object MoveTypeDataCodec:
 
   given BsonDecoder[MoveTypeData] = bson => MoveTypeData.valueOf(bson.asString.getValue)
 

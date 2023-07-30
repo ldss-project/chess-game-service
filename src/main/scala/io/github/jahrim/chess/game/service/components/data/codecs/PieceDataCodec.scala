@@ -3,15 +3,15 @@ package io.github.jahrim.chess.game.service.components.data.codecs
 import org.bson.conversions.Bson
 import io.github.jahrim.chess.game.service.components.data.{PieceData, PieceTypeData, PositionData}
 import io.github.jahrim.hexarc.persistence.bson.codecs.{BsonDocumentDecoder, BsonDocumentEncoder}
-import PieceCodec.given
-import PositionCodec.given
+import PieceDataCodec.given
+import PositionDataCodec.given
 import PieceTypeDataCodec.given
 import FileCodec.given
 import RankCodec.given
 import io.github.jahrim.hexarc.persistence.bson.dsl.BsonDSL.{*, given}
 
 /** [[Bson]] codec for [[PieceData]] */
-object PieceCodec:
+object PieceDataCodec:
 
   /** A given [[BsonDocumentDecoder]] for [[PieceData]] */
   given bsonToPiece: BsonDocumentDecoder[PieceData] = bson =>
