@@ -21,7 +21,7 @@ object MoveDataCodec:
   /** A given [[BsonDocumentDecoder]] for [[MoveData]]. */
   given bsonToMove: BsonDocumentDecoder[MoveData] = bson =>
     MoveData(
-      typeMove = bson.require("move").as[MoveTypeData],
+      typeMove = bson.require("type").as[MoveTypeData],
       from = bson.require("from").as[PositionData],
       to = bson.require("to").as[PositionData],
       castling = bson("castling").map(_.as[CastlingData]),
