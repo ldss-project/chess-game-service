@@ -1,6 +1,6 @@
 package io.github.jahrim.chess.game.service.util.extension
 
-import io.github.jahrim.chess.authentication.service.util.extension.JsonObjectExtension.jsonToBson
+import io.github.jahrim.chess.game.service.util.extension.JsonObjectExtension.jsonToBson
 import io.github.jahrim.hexarc.persistence.bson.dsl.BsonDSL.{*, given}
 import io.vertx.core.http.HttpServerResponse
 import io.vertx.ext.web.RoutingContext

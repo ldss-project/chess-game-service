@@ -1,17 +1,13 @@
 package io.github.jahrim.chess.game.service.components.ports
 
-
 import io.github.chess.engine.events.Event
 import io.github.chess.engine.model.board.Position
 import io.github.chess.engine.model.configuration.Player
 import io.github.chess.engine.model.moves.Move
 import io.github.chess.engine.model.pieces.{Pawn, Piece, PromotionPiece}
 import io.github.jahrim.chess.game.service.components.data.GameConfigurationData
-import io.github.jahrim.chess.game.service.main.TimeConstraint
 import io.github.jahrim.hexarc.architecture.vertx.core.components.Port
 import io.vertx.core.Future
-
-import scala.concurrent.Future
 import scala.reflect.ClassTag
 
 trait ChessGamePort extends Port:
@@ -68,7 +64,11 @@ trait ChessGamePort extends Port:
    * @param promotingPiece the piece to promote the pawn to
    * @return a future containing the piece that the pawn was promoted to
    */
-  def promote[P <: Piece](gameId: String, pawnPosition: Position, promotingPiece: PromotionPiece[P]): Future[P]
+  def promote[P <: Piece](
+      gameId: String,
+      pawnPosition: Position,
+      promotingPiece: PromotionPiece[P]
+  ): Future[P]
 
   /**
    * Subscribes an handler to a particular event.
@@ -77,7 +77,7 @@ trait ChessGamePort extends Port:
    * @tparam T type parameter of the event extending the superclass [[Event]]
    * @return a future containing the id of the subscription
    */
-  def subscribe[T <: Event : ClassTag](handler: T => Unit): Future[String]
+  def subscribe[T <: Event: ClassTag](handler: T => Unit): Future[String]
 
   /**
    * Cancel the specified subscriptions.
@@ -86,4 +86,3 @@ trait ChessGamePort extends Port:
    * @return a future that completes when the cancellation has completed
    */
   def unsubscribe(subscriptionIds: String*): Future[Unit]
-
