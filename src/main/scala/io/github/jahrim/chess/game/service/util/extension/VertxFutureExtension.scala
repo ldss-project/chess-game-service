@@ -1,7 +1,6 @@
 package io.github.jahrim.chess.game.service.util.extension
 
 import io.vertx.core.Future
-
 import scala.util.Try
 
 /** An extension for [[Future VertxFuture]]s. */
