@@ -14,9 +14,9 @@ object GameConfigurationDataCodec:
   /** A given [[BsonDocumentDecoder]] for [[GameConfigurationData]]. */
   given bsonToGameConfiguration: BsonDocumentDecoder[GameConfigurationData] = bson =>
     GameConfigurationData(
-      timeConstraint = bson("gameConfiguration.timeConstraint").map(_.as[TimeConstraintData]),
-      gameId = bson("gameConfiguration.gameId").map(_.as[String]),
-      isPrivate = bson.require("gameConfiguration.isPrivate").as[Boolean]
+      timeConstraint = bson("timeConstraint").map(_.as[TimeConstraintData]),
+      gameId = bson("gameId").map(_.as[String]),
+      isPrivate = bson.require("isPrivate").as[Boolean]
     )
 
   /** A given [[BsonDocumentEncoder]] for [[GameConfigurationData]]. */
@@ -24,5 +24,5 @@ object GameConfigurationDataCodec:
     bson {
       gc.timeConstraint.foreach { "timeConstraint" :: _ }
       gc.gameId.foreach { "gameId" :: _ }
-      "private" :: gc.isPrivate
+      "isPrivate" :: gc.isPrivate
     }
