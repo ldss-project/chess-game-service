@@ -15,9 +15,8 @@ object TimeConstraintDataCodec:
   /** A given [[BsonDocumentDecoder]] for [[TimeConstraintData]]. */
   given bsonToTimeConstraint: BsonDocumentDecoder[TimeConstraintData] = bson =>
     TimeConstraintData(
-      timeConstraintType =
-        bson.require("gameConfiguration.timeConstraint").as[TimeConstraintTypeData],
-      time = bson.require("gameConfiguration.timeConstraint").as[Duration]
+      timeConstraintType = bson.require("type").as[TimeConstraintTypeData],
+      time = bson.require("time").as[Duration]
     )
 
   /** A given [[BsonDocumentEncoder]] for [[TimeConstraintData]]. */
