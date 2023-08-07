@@ -20,6 +20,11 @@ import io.github.jahrim.chess.game.service.components.data.codecs.CastlingDataCo
 import io.github.jahrim.chess.game.service.components.data.codecs.EnPassantDataCodec.given
 import io.github.jahrim.chess.game.service.components.data.PieceData
 import io.github.jahrim.chess.game.service.components.data.PieceTypeData
+import io.github.jahrim.chess.game.service.components.data.codecs.MoveDataCodecTest.{
+  move,
+  moveDocument,
+  wrongMoveDocument
+}
 import io.github.jahrim.hexarc.persistence.bson.codecs.{
   BsonDecoder,
   BsonDocumentDecoder,
@@ -31,134 +36,46 @@ import org.bson.BsonDocument
 import org.bson.conversions.Bson
 import test.AbstractTest
 
-class MoveDataCodecTest extends AbstractTest:
+class MoveDataCodecTest extends CodecTest("MoveData"):
 
-  before {}
+  override def decodeCorrectBsonTest(): Unit =
+    val document: BsonDocument = moveDocument
+    val value: MoveData = document.as[MoveData]
+    assert(value == move)
 
-  describe("A BsonDecoder for MoveData") {
-    it("should decode properly a correct bson") {
-      val document: BsonDocument = bson {
-        "type" :: "Capture"
-        "from" :# {
-          "file" :: "B"
-          "rank" :: "_1"
-        }
-        "to" :# {
-          "file" :: "C"
-          "rank" :: "_2"
-        }
-        "castling" :# {
-          "rook" :# {
-            "from" :# {
-              "file" :: "A"
-              "rank" :: "_1"
-            }
-            "to" :# {
-              "file" :: "D"
-              "rank" :: "_1"
-            }
-          }
-        }
-        "enPassant" :# {
-          "opponentPawn" :# {
-            "type" :: "Pawn"
-            "position" :# {
-              "file" :: "D"
-              "rank" :: "_4"
-            }
-          }
-        }
-      }
+  override def decodeWrongBsonTest(): Unit =
+    assertThrows[Exception] {
+      val document: BsonDocument = wrongMoveDocument
       val value: MoveData = document.as[MoveData]
-
-      assert(
-        value == MoveData(
-          MoveTypeData.Capture,
-          PositionData(File.B, Rank._1),
-          PositionData(File.C, Rank._2),
-          Option(
-            CastlingData(
-              PositionData(File.A, Rank._1),
-              PositionData(File.D, Rank._1)
-            )
-          ),
-          Option(EnPassantData(PieceData(PieceTypeData.Pawn, PositionData(File.D, Rank._4))))
-        )
-      )
-
     }
 
-    it("should throw an error when decoding a wrong bson") {
-      assertThrows[Exception] {
-        val document: BsonDocument = bson {
-          "type" :: "Capture"
-          "from" :# {
-            "file" :: "B"
-            "rank" :: "_11"
-          }
-          "to" :# {
-            "file" :: "C"
-            "rank" :: "_2"
-          }
-          "castling" :# {
-            "rook" :# {
-              "from" :# {
-                "file" :: "B"
-                "rank" :: "_1"
-              }
-              "to" :# {
-                "file" :: "C"
-                "rank" :: "_2"
-              }
+  override def encodeTest(): Unit =
+    val document: BsonDocument = move.asBson.asDocument
+    assert(document.require("type").as[MoveTypeData] == MoveTypeData.Capture)
+    assert(document.require("from").as[PositionData] == PositionDataCodecTest.position)
+    assert(document.require("to").as[PositionData] == PositionDataCodecTest.position)
+    assert(document.require("castling").as[CastlingData] == CastlingDataCodecTest.castling)
+    assert(document.require("enPassant").as[EnPassantData] == EnPassantDataCodecTest.enPassant)
 
-            }
-          }
-          "enPassant" :# {
-            "opponentPawn" :# {
-              "type" :: "Pawn"
-              "position" :# {
-                "file" :: "B"
-                "rank" :: "_1"
-              }
-            }
-          }
-        }
-        val value: MoveData = document.as[MoveData]
-      }
-    }
+object MoveDataCodecTest:
+  val move: MoveData = MoveData(
+    MoveTypeData.Capture,
+    PositionDataCodecTest.position,
+    PositionDataCodecTest.position,
+    Option(CastlingDataCodecTest.castling),
+    Option(EnPassantDataCodecTest.enPassant)
+  )
+  val moveDocument: BsonDocument = bson {
+    "type" :: "Capture"
+    "from" :: PositionDataCodecTest.positionDocument
+    "to" :: PositionDataCodecTest.positionDocument
+    "castling" :: CastlingDataCodecTest.castlingDocument
+    "enPassant" :: EnPassantDataCodecTest.enPassantDocument
   }
-
-  describe("A BsonEncoder for MoveData") {
-    it("should encode properly a move") {
-      val value: MoveData = MoveData(
-        MoveTypeData.Capture,
-        PositionData(File.B, Rank._2),
-        PositionData(File.C, Rank._3),
-        Option(
-          CastlingData(
-            PositionData(File.C, Rank._3),
-            PositionData(File.C, Rank._4)
-          )
-        ),
-        Option(EnPassantData(PieceData(PieceTypeData.Pawn, PositionData(File.D, Rank._4))))
-      )
-      val document: BsonDocument = value.asBson.asDocument
-      assert(document.require("type").as[MoveTypeData] == MoveTypeData.Capture)
-      assert(document.require("from").as[PositionData] == PositionData(File.B, Rank._2))
-      assert(document.require("to").as[PositionData] == PositionData(File.C, Rank._3))
-      assert(
-        document.require("castling").as[CastlingData] == CastlingData(
-          PositionData(File.C, Rank._3),
-          PositionData(File.C, Rank._4)
-        )
-      )
-      assert(
-        document.require("enPassant").as[EnPassantData] == EnPassantData(
-          PieceData(PieceTypeData.Pawn, PositionData(File.D, Rank._4))
-        )
-      )
-
-    }
+  val wrongMoveDocument: BsonDocument = bson {
+    "type" :: "InvalidType"
+    "from" :: PositionDataCodecTest.positionDocument
+    "to" :: PositionDataCodecTest.positionDocument
+    "castling" :: CastlingDataCodecTest.castlingDocument
+    "enPassant" :: EnPassantDataCodecTest.enPassantDocument
   }
-
-  after {}

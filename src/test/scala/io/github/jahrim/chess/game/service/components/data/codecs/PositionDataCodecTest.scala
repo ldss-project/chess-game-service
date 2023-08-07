@@ -4,6 +4,11 @@ import io.github.chess.engine.model.board.{File, Rank}
 import io.github.jahrim.chess.game.service.components.data.PositionData
 import io.github.jahrim.chess.game.service.components.data.codecs.FileCodec.given
 import io.github.jahrim.chess.game.service.components.data.codecs.PositionDataCodec.given
+import io.github.jahrim.chess.game.service.components.data.codecs.PositionDataCodecTest.{
+  position,
+  positionDocument,
+  wrongPositionDocument
+}
 import io.github.jahrim.chess.game.service.components.data.codecs.RankCodec.given
 import io.github.jahrim.hexarc.persistence.bson.codecs.{
   BsonDecoder,
@@ -16,38 +21,27 @@ import org.bson.BsonDocument
 import org.bson.conversions.Bson
 import test.AbstractTest
 
-class PositionDataCodecTest extends AbstractTest:
+class PositionDataCodecTest extends CodecTest("PositionData"):
+  override def decodeCorrectBsonTest(): Unit =
+    val document: BsonDocument = positionDocument
+    val value: PositionData = document.as[PositionData]
+    assert(value == position)
 
-  before {}
+  override def decodeWrongBsonTest(): Unit =
+    assertThrows[Exception] { wrongPositionDocument.as[PositionData] }
 
-  describe("A BsonDecoder for PositionData") {
-    it("should decode properly a correct bson") {
-      val document: BsonDocument = bson {
-        "file" :: "A"
-        "rank" :: "_1"
-      }
-      val value: PositionData = document.as[PositionData]
+  override def encodeTest(): Unit =
+    val document: BsonDocument = position.asBson.asDocument
+    assert(document.require("file").as[File] == position.file)
+    assert(document.require("rank").as[Rank] == position.rank)
 
-      assert(value == PositionData(File.A, Rank._1))
-    }
-    it("should throw an error when decoding a wrong bson") {
-      assertThrows[Exception] {
-        val document: BsonDocument = bson {
-          "file" :: "I"
-          "rank" :: "_1"
-        }
-        val value: PositionData = document.as[PositionData]
-      }
-    }
+object PositionDataCodecTest:
+  val position: PositionData = PositionData(File.A, Rank._1)
+  val positionDocument: BsonDocument = bson {
+    "file" :: "A"
+    "rank" :: "_1"
   }
-
-  describe("A BsonEncoder for PositionData") {
-    it("should encode properly a position") {
-      val value: PositionData = PositionData(File.A, Rank._1)
-      val document: BsonDocument = value.asBson.asDocument
-      assert(document.require("file").as[File] == File.A)
-      assert(document.require("rank").as[Rank] == Rank._1)
-    }
+  val wrongPositionDocument: BsonDocument = bson {
+    "file" :: "InvalidFile"
+    "rank" :: "_1"
   }
-
-  after {}

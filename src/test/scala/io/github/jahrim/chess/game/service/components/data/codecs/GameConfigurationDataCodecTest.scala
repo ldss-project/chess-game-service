@@ -2,12 +2,17 @@ package io.github.jahrim.chess.game.service.components.data.codecs
 
 import io.github.chess.engine.model.board.{File, Rank}
 import io.github.jahrim.chess.game.service.components.data.{
+  GameConfigurationData,
   TimeConstraintData,
-  TimeConstraintTypeData,
-  GameConfigurationData
+  TimeConstraintTypeData
 }
 import io.github.jahrim.chess.game.service.components.data.codecs.DurationCodec.given
 import io.github.jahrim.chess.game.service.components.data.codecs.GameConfigurationDataCodec.given
+import io.github.jahrim.chess.game.service.components.data.codecs.GameConfigurationDataCodecTest.{
+  gameConfiguration,
+  gameConfigurationDocument,
+  wrongGameConfigurationDocument
+}
 import io.github.jahrim.chess.game.service.components.data.codecs.PositionDataCodec.given
 import io.github.jahrim.chess.game.service.components.data.codecs.TimeConstraintDataCodec.given
 import io.github.jahrim.chess.game.service.components.data.codecs.TimeConstraintTypeDataCodec.given
@@ -24,66 +29,45 @@ import test.AbstractTest
 
 import scala.concurrent.duration.Duration
 
-class GameConfigurationDataCodecTest extends AbstractTest:
+class GameConfigurationDataCodecTest extends CodecTest("GameConfigurationData"):
 
-  before {}
+  override def decodeCorrectBsonTest(): Unit =
+    val document: BsonDocument = gameConfigurationDocument
+    val value: GameConfigurationData = document.as[GameConfigurationData]
+    assert(value == gameConfiguration)
 
-  describe("A BsonDecoder for GameConfigurationData") {
-    it("should decode properly a correct bson") {
-      val document: BsonDocument = bson {
-        "timeConstraint" :# {
-          "type" :: "MoveLimit"
-          "time" :# {
-            "value" :: 2L
-            "unit" :: "minutes"
-          }
-        }
-        "gameId" :: "jnjgbng565fb"
-        "isPrivate" :: true
-      }
+  override def decodeWrongBsonTest(): Unit =
+    assertThrows[Exception] {
+      val document: BsonDocument = wrongGameConfigurationDocument
       val value: GameConfigurationData = document.as[GameConfigurationData]
-
-      assert(
-        value == GameConfigurationData(
-          Option(TimeConstraintData(TimeConstraintTypeData.MoveLimit, Duration(2L, "minutes"))),
-          Option("jnjgbng565fb"),
-          true
-        )
-      )
     }
-    it("should throw an error when decoding a wrong bson") {
-      assertThrows[Exception] {
-        val document: BsonDocument = bson {
-          "timeConstraint" :# {
-            "type" :: "MoveLimit"
-            "time" :# {
-              "value" :: 2L
-              "unit" :: "minutes"
-            }
-          }
-          "gameId" :: "jnjgbng565fb"
-        }
-        val value: GameConfigurationData = document.as[GameConfigurationData]
-      }
-    }
-  }
 
-  describe("A BsonEncoder for GameConfigurationData") {
-    it("should encode properly a gameConfiguration") {
-      val value: GameConfigurationData =
-        GameConfigurationData(
-          Option(TimeConstraintData(TimeConstraintTypeData.MoveLimit, Duration(2L, "minutes"))),
-          Option("jnjgbng565fb"),
-          true
-        )
-      val document: BsonDocument = value.asBson.asDocument
-      assert(
-        document("timeConstraint").map(_.as[TimeConstraintData]) ==
-          Option(TimeConstraintData(TimeConstraintTypeData.MoveLimit, Duration(2L, "minutes")))
-      )
-      assert(document("gameId").map(_.as[String]) == Option("jnjgbng565fb"))
-      assert(document.require("isPrivate").as[Boolean] == true)
-    }
-  }
+  override def encodeTest(): Unit =
+    val document: BsonDocument = gameConfiguration.asBson.asDocument
+    assert(
+      document
+        .require("timeConstraint")
+        .as[TimeConstraintData] == TimeConstraintDataCodecTest.timeConstraint
+    )
+    assert(document.require("gameId").as[String] == "gameId")
+    assert(document.require("isPrivate").as[Boolean] == true)
 
-  after {}
+object GameConfigurationDataCodecTest:
+  val gameConfiguration: GameConfigurationData =
+    GameConfigurationData(
+      Option(TimeConstraintDataCodecTest.timeConstraint),
+      Option("gameId"),
+      true
+    )
+  val gameConfigurationDocument: BsonDocument =
+    bson {
+      "timeConstraint" :: TimeConstraintDataCodecTest.timeConstraintDocument
+      "gameId" :: "gameId"
+      "isPrivate" :: true
+    }
+  val wrongGameConfigurationDocument: BsonDocument =
+    bson {
+      "timeConstraint" :: TimeConstraintDataCodecTest.timeConstraintDocument
+      "gameId" :: "gameId"
+      "InvalidField" :: true
+    }

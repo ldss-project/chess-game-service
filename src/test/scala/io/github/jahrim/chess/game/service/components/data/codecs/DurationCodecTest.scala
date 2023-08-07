@@ -1,6 +1,11 @@
 package io.github.jahrim.chess.game.service.components.data.codecs
 
 import io.github.jahrim.chess.game.service.components.data.codecs.DurationCodec.given
+import io.github.jahrim.chess.game.service.components.data.codecs.DurationCodecTest.{
+  time,
+  timeDocument,
+  wrongTimeDocument
+}
 import io.github.jahrim.hexarc.persistence.bson.codecs.{
   BsonDecoder,
   BsonDocumentDecoder,
@@ -10,40 +15,35 @@ import io.github.jahrim.hexarc.persistence.bson.codecs.{
 import io.github.jahrim.hexarc.persistence.bson.dsl.BsonDSL.{*, given}
 import org.bson.BsonDocument
 import org.bson.conversions.Bson
+
 import scala.concurrent.duration.Duration
 import test.AbstractTest
 
-class DurationCodecTest extends AbstractTest:
+class DurationCodecTest extends CodecTest("Duration"):
+  override def decodeCorrectBsonTest(): Unit =
+    val document: BsonDocument = timeDocument
+    val value: Duration = document.as[Duration]
 
-  before {}
+    assert(value == time)
 
-  describe("A BsonDecoder for Duration") {
-    it("should decode properly a correct bson") {
-      val document: BsonDocument = bson {
-        "value" :: 2L
-        "unit" :: "minutes"
-      }
+  override def decodeWrongBsonTest(): Unit =
+    assertThrows[Exception] {
+      val document: BsonDocument = wrongTimeDocument
       val value: Duration = document.as[Duration]
+    }
 
-      assert(value == Duration(2L, "minutes"))
-    }
-    it("should throw an error when decoding a wrong bson") {
-      assertThrows[Exception] {
-        val document: BsonDocument = bson {
-          "file" :: "I"
-        }
-        val value: Duration = document.as[Duration]
-      }
-    }
+  override def encodeTest(): Unit =
+    val document: BsonDocument = time.asBson.asDocument
+    assert(document.require("value").as[Long] == 2L)
+    assert(document.require("unit").as[String] == "MINUTES")
+
+object DurationCodecTest:
+  val time: Duration = Duration(2L, "minutes")
+  val timeDocument: BsonDocument = bson {
+    "value" :: 2L
+    "unit" :: "minutes"
   }
-
-  describe("A BsonEncoder for Duration") {
-    it("should encode properly a duration") {
-      val value: Duration = Duration(2L, "minutes")
-      val document: BsonDocument = value.asBson.asDocument
-      assert(document.require("value").as[Long] == 2L)
-      assert(document.require("unit").as[String] == "MINUTES")
-    }
+  val wrongTimeDocument: BsonDocument = bson {
+    "value" :: 2L
+    "unit" :: "InvalidUnit"
   }
-
-  after {}
