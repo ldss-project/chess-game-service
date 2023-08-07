@@ -4,25 +4,32 @@ import io.github.jahrim.chess.game.service.components.data.codecs.FileCodec.give
 import io.github.jahrim.chess.game.service.components.data.codecs.PieceDataCodec.given
 import io.github.jahrim.chess.game.service.components.data.codecs.PieceTypeDataCodec.given
 import io.github.jahrim.chess.game.service.components.data.codecs.PositionDataCodec.given
+import io.github.jahrim.chess.game.service.components.data.codecs.PromoteToDataCodec.given
 import io.github.jahrim.chess.game.service.components.data.codecs.RankCodec.given
-import io.github.jahrim.chess.game.service.components.data.{PieceData, PieceTypeData, PositionData}
+import io.github.jahrim.chess.game.service.components.data.{
+  PieceData,
+  PieceTypeData,
+  PositionData,
+  PromoteData,
+  PromoteToData
+}
 import io.github.jahrim.hexarc.persistence.bson.codecs.{BsonDocumentDecoder, BsonDocumentEncoder}
 import io.github.jahrim.hexarc.persistence.bson.dsl.BsonDSL.{*, given}
 import org.bson.conversions.Bson
 
-/** [[Bson]] codec for [[PieceData]] */
+/** [[Bson]] codec for [[PromoteData]] */
 object PromoteDataCodec:
 
-  /** A given [[BsonDocumentDecoder]] for [[PieceData]] */
-  given bsonToPiece: BsonDocumentDecoder[PieceData] = bson =>
-    PieceData(
-      pieceType = bson.require("type").as[PieceTypeData],
-      position = bson.require("position").as[PositionData]
+  /** A given [[BsonDocumentDecoder]] for [[PromoteData]] */
+  given bsonToPromote: BsonDocumentDecoder[PromoteData] = bson =>
+    PromoteData(
+      pawn = bson.require("pawn").as[PieceData],
+      to = bson.require("to").as[PromoteToData]
     )
 
-  /** A given [[BsonDocumentEncoder]] for [[PieceData]] */
-  given pieceToBson: BsonDocumentEncoder[PieceData] = piece =>
+  /** A given [[BsonDocumentEncoder]] for [[PromoteData]] */
+  given promoteToBson: BsonDocumentEncoder[PromoteData] = p =>
     bson {
-      "type" :: piece.pieceType
-      "position" :: piece.position
+      "pawn" :: p.pawn
+      "to" :: p.to
     }
