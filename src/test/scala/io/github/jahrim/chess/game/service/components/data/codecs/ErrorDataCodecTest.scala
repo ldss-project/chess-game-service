@@ -2,6 +2,11 @@ package io.github.jahrim.chess.game.service.components.data.codecs
 
 import io.github.jahrim.chess.game.service.components.data.*
 import io.github.jahrim.chess.game.service.components.data.codecs.ErrorDataCodec.given
+import io.github.jahrim.chess.game.service.components.data.codecs.ErrorDataCodecTest.{
+  error,
+  errorDocument,
+  wrongErrorDocument
+}
 import io.github.jahrim.chess.game.service.components.data.codecs.ErrorTypeDataCodec.given
 import io.github.jahrim.hexarc.persistence.bson.codecs.{
   BsonDecoder,
@@ -14,48 +19,36 @@ import org.bson.BsonDocument
 import org.bson.conversions.Bson
 import test.AbstractTest
 
-class ErrorDataCodecTest extends AbstractTest:
+class ErrorDataCodecTest extends CodecTest("ErrorData"):
 
-  before {}
+  override def decodeCorrectBsonTest(): Unit =
+    val document: BsonDocument = errorDocument
+    val value: ErrorData = document.as[ErrorData]
+    assert(value == error)
 
-  describe("A BsonDecoder for ErrorData") {
-    it("should decode properly a correct bson") {
-      val document: BsonDocument = bson {
-        "type" :: "Generic"
-        "message" :: "generic message"
-      }
+  override def decodeWrongBsonTest(): Unit =
+    assertThrows[Exception] {
+      val document: BsonDocument = wrongErrorDocument
       val value: ErrorData = document.as[ErrorData]
-
-      assert(
-        value == ErrorData(
-          ErrorTypeData.Generic,
-          "generic message"
-        )
-      )
-
     }
 
-    it("should throw an error when decoding a wrong bson") {
-      assertThrows[Exception] {
-        val document: BsonDocument = bson {
-          "message" :: "generic message"
-        }
-        val value: ErrorData = document.as[ErrorData]
-      }
+  override def encodeTest(): Unit =
+    val document: BsonDocument = error.asBson.asDocument
+    assert(document.require("type").as[ErrorTypeData] == ErrorTypeData.Generic)
+    assert(document.require("message").as[String] == "generic message")
+
+object ErrorDataCodecTest:
+  val error: ErrorData = ErrorData(
+    ErrorTypeData.Generic,
+    "generic message"
+  )
+  val errorDocument: BsonDocument =
+    bson {
+      "type" :: "Generic"
+      "message" :: "generic message"
     }
-  }
-
-  describe("A BsonEncoder for ErrorData") {
-    it("should encode properly a error") {
-      val value: ErrorData = ErrorData(
-        ErrorTypeData.Generic,
-        "generic message"
-      )
-      val document: BsonDocument = value.asBson.asDocument
-      assert(document.require("type").as[ErrorTypeData] == ErrorTypeData.Generic)
-      assert(document.require("message").as[String] == "generic message")
-
+  val wrongErrorDocument: BsonDocument =
+    bson {
+      "type" :: "InvalidType"
+      "message" :: "generic message"
     }
-  }
-
-  after {}

@@ -7,6 +7,11 @@ import io.github.jahrim.chess.game.service.components.data.codecs.RookDataCodec.
 import io.github.jahrim.chess.game.service.components.data.codecs.FileCodec.given
 import io.github.jahrim.chess.game.service.components.data.codecs.PositionDataCodec.given
 import io.github.jahrim.chess.game.service.components.data.codecs.RankCodec.given
+import io.github.jahrim.chess.game.service.components.data.codecs.RookDataCodecTest.{
+  rook,
+  rookDocument,
+  wrongRookDocument
+}
 import io.github.jahrim.hexarc.persistence.bson.codecs.{
   BsonDecoder,
   BsonDocumentDecoder,
@@ -18,49 +23,31 @@ import org.bson.BsonDocument
 import org.bson.conversions.Bson
 import test.AbstractTest
 
-class RookDataCodecTest extends AbstractTest:
+class RookDataCodecTest extends CodecTest("RookData"):
 
-  before {}
+  override def decodeCorrectBsonTest(): Unit =
+    val document: BsonDocument = rookDocument
+    val value: RookData = document.as[RookData]
+    assert(value == rook)
 
-  describe("A BsonDecoder for RookData") {
-    it("should decode properly a correct bson") {
-      val document: BsonDocument = bson {
-        "from" :# {
-          "file" :: "A"
-          "rank" :: "_1"
-        }
-        "to" :# {
-          "file" :: "B"
-          "rank" :: "_2"
-        }
-      }
+  override def decodeWrongBsonTest(): Unit =
+    assertThrows[Exception] {
+      val document: BsonDocument = wrongRookDocument
       val value: RookData = document.as[RookData]
+    }
 
-      assert(value == RookData(PositionData(File.A, Rank._1), PositionData(File.B, Rank._2)))
-    }
-    it("should throw an error when decoding a wrong bson") {
-      assertThrows[Exception] {
-        val document: BsonDocument = bson {
-          "from" :# {
-            "file" :: "A"
-            "rank" :: "_1"
-          }
-        }
-        val value: RookData = document.as[RookData]
-      }
-    }
+  override def encodeTest(): Unit =
+    val document: BsonDocument = rook.asBson.asDocument
+    assert(document.require("from").as[PositionData] == PositionDataCodecTest.position)
+    assert(document.require("to").as[PositionData] == PositionDataCodecTest.position)
+
+object RookDataCodecTest:
+  val rook: RookData = RookData(PositionDataCodecTest.position, PositionDataCodecTest.position)
+  val rookDocument: BsonDocument = bson {
+    "from" :: PositionDataCodecTest.positionDocument
+    "to" :: PositionDataCodecTest.positionDocument
   }
-
-  describe("A BsonEncoder for RookData") {
-    it("should encode properly a rookData") {
-      val value: RookData = RookData(
-        PositionData(File.A, Rank._1),
-        PositionData(File.B, Rank._2)
-      )
-      val document: BsonDocument = value.asBson.asDocument
-      assert(document.require("from").as[PositionData] == PositionData(File.A, Rank._1))
-      assert(document.require("to").as[PositionData] == PositionData(File.B, Rank._2))
-    }
+  val wrongRookDocument: BsonDocument = bson {
+    "from" :: PositionDataCodecTest.wrongPositionDocument
+    "to" :: PositionDataCodecTest.positionDocument
   }
-
-  after {}

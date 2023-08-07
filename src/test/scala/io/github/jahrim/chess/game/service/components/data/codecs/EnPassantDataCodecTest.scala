@@ -13,6 +13,11 @@ import io.github.jahrim.chess.game.service.components.data.codecs.PieceTypeDataC
 import io.github.jahrim.chess.game.service.components.data.codecs.PositionDataCodec.given
 import io.github.jahrim.chess.game.service.components.data.codecs.RankCodec.given
 import io.github.jahrim.chess.game.service.components.data.codecs.EnPassantDataCodec.given
+import io.github.jahrim.chess.game.service.components.data.codecs.EnPassantDataCodecTest.{
+  enPassant,
+  enPassantDocument,
+  wrongEnPassantDocument
+}
 import io.github.jahrim.hexarc.persistence.bson.codecs.{
   BsonDecoder,
   BsonDocumentDecoder,
@@ -24,54 +29,31 @@ import org.bson.BsonDocument
 import org.bson.conversions.Bson
 import test.AbstractTest
 
-/** Template test. */
-class EnPassantDataCodecTest extends AbstractTest:
+class EnPassantDataCodecTest extends CodecTest("EnPassantData"):
 
-  before {}
+  override def decodeCorrectBsonTest(): Unit =
+    val document: BsonDocument = enPassantDocument
+    val value: EnPassantData = document.as[EnPassantData]
+    assert(value == enPassant)
 
-  describe("A BsonDecoder for EnPassantData") {
-    it("should decode properly a correct bson") {
-      val document: BsonDocument = bson {
-        "opponentPawn" :# {
-          "type" :: "Pawn"
-          "position" :# {
-            "file" :: "D"
-            "rank" :: "_4"
-          }
-        }
-      }
+  override def decodeWrongBsonTest(): Unit =
+    assertThrows[Exception] {
+      val document: BsonDocument = wrongEnPassantDocument
       val value: EnPassantData = document.as[EnPassantData]
+    }
 
-      assert(value == EnPassantData(PieceData(PieceTypeData.Pawn, PositionData(File.D, Rank._4))))
-    }
-    it("should throw an error when decoding a wrong bson") {
-      assertThrows[Exception] {
-        val document: BsonDocument = bson {
-          "opponentPawn" :# {
-            "type" :: "Pawn"
-            "position" :# {
-              "file" :: "K"
-              "rank" :: "_4"
-            }
-          }
-        }
-        val value: EnPassantData = document.as[EnPassantData]
-      }
-    }
+  override def encodeTest(): Unit =
+    val value: EnPassantData = enPassant
+    val document: BsonDocument = value.asBson.asDocument
+    assert(
+      document.require("opponentPawn").as[PieceData] == PieceDataCodecTest.piece
+    )
+
+object EnPassantDataCodecTest:
+  val enPassant: EnPassantData = EnPassantData(PieceDataCodecTest.piece)
+  val enPassantDocument: BsonDocument = bson {
+    "opponentPawn" :: PieceDataCodecTest.pieceDocument
   }
-
-  describe("A BsonEncoder for EnPassantData") {
-    it("should encode properly an enPassant") {
-      val value: EnPassantData =
-        EnPassantData(PieceData(PieceTypeData.Pawn, PositionData(File.D, Rank._4)))
-      val document: BsonDocument = value.asBson.asDocument
-      assert(
-        document.require("opponentPawn").as[PieceData] == PieceData(
-          PieceTypeData.Pawn,
-          PositionData(File.D, Rank._4)
-        )
-      )
-    }
+  val wrongEnPassantDocument: BsonDocument = bson {
+    "opponentPawn" :: PieceDataCodecTest.wrongPieceDocument
   }
-
-  after {}

@@ -1,6 +1,7 @@
 package io.github.jahrim.chess.game.service.components.data.codecs
 
 import io.github.chess.engine.model.board.{File, Rank}
+
 import scala.concurrent.duration.Duration
 import io.github.jahrim.chess.game.service.components.data.codecs.DurationCodec.given
 import io.github.jahrim.chess.game.service.components.data.codecs.FileCodec.given
@@ -8,6 +9,11 @@ import io.github.jahrim.chess.game.service.components.data.codecs.PositionDataCo
 import io.github.jahrim.chess.game.service.components.data.TimeConstraintData
 import io.github.jahrim.chess.game.service.components.data.TimeConstraintTypeData
 import io.github.jahrim.chess.game.service.components.data.codecs.TimeConstraintDataCodec.given
+import io.github.jahrim.chess.game.service.components.data.codecs.TimeConstraintDataCodecTest.{
+  timeConstraint,
+  timeConstraintDocument,
+  wrongTimeConstraintDocument
+}
 import io.github.jahrim.chess.game.service.components.data.codecs.TimeConstraintTypeDataCodec.given
 import io.github.jahrim.hexarc.persistence.bson.codecs.{
   BsonDecoder,
@@ -20,47 +26,34 @@ import org.bson.BsonDocument
 import org.bson.conversions.Bson
 import test.AbstractTest
 
-class TimeConstraintDataCodecTest extends AbstractTest:
+class TimeConstraintDataCodecTest extends CodecTest("TimeConstraintData"):
 
-  before {}
+  override def decodeCorrectBsonTest(): Unit =
+    val document: BsonDocument = timeConstraintDocument
+    val value: TimeConstraintData = document.as[TimeConstraintData]
+    assert(value == timeConstraint)
 
-  describe("A BsonDecoder for TimeConstraintData") {
-    it("should decode properly a correct bson") {
-      val document: BsonDocument = bson {
-        "type" :: "MoveLimit"
-        "time" :# {
-          "value" :: 2L
-          "unit" :: "minutes"
-        }
-      }
+  override def decodeWrongBsonTest(): Unit =
+    assertThrows[Exception] {
+      val document: BsonDocument = wrongTimeConstraintDocument
       val value: TimeConstraintData = document.as[TimeConstraintData]
-
-      assert(value == TimeConstraintData(TimeConstraintTypeData.MoveLimit, Duration(2L, "minutes")))
     }
-    it("should throw an error when decoding a wrong bson") {
-      assertThrows[Exception] {
-        val document: BsonDocument = bson {
-          "type" :: "Limit"
-          "time" :# {
-            "value" :: 2L
-            "unit" :: "minutes"
-          }
-        }
-        val value: TimeConstraintData = document.as[TimeConstraintData]
-      }
-    }
-  }
 
-  describe("A BsonEncoder for TimeConstraintData") {
-    it("should encode properly a timeConstraint") {
-      val value: TimeConstraintData =
-        TimeConstraintData(TimeConstraintTypeData.MoveLimit, Duration(2L, "minutes"))
-      val document: BsonDocument = value.asBson.asDocument
-      assert(
-        document.require("type").as[TimeConstraintTypeData] == TimeConstraintTypeData.MoveLimit
-      )
-      assert(document.require("time").as[Duration] == Duration(2L, "minutes"))
-    }
-  }
+  override def encodeTest(): Unit =
+    val document: BsonDocument = timeConstraint.asBson.asDocument
+    assert(document.require("type").as[TimeConstraintTypeData] == TimeConstraintTypeData.MoveLimit)
+    assert(document.require("time").as[Duration] == DurationCodecTest.time)
 
-  after {}
+object TimeConstraintDataCodecTest:
+  val timeConstraint: TimeConstraintData =
+    TimeConstraintData(TimeConstraintTypeData.MoveLimit, DurationCodecTest.time)
+  val timeConstraintDocument: BsonDocument =
+    bson {
+      "type" :: "MoveLimit"
+      "time" :: DurationCodecTest.timeDocument
+    }
+  val wrongTimeConstraintDocument: BsonDocument =
+    bson {
+      "type" :: "InvalidType"
+      "time" :: DurationCodecTest.timeDocument
+    }
