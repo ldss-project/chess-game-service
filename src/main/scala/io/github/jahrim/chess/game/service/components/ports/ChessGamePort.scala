@@ -1,17 +1,14 @@
 package io.github.jahrim.chess.game.service.components.ports
 
 import io.github.chess.engine.events.Event
-import io.github.chess.engine.model.board.Position
-import io.github.chess.engine.model.configuration.Player
-import io.github.chess.engine.model.moves.Move
 import io.github.chess.engine.model.pieces.{Pawn, Piece, PromotionPiece}
-import io.github.jahrim.chess.game.service.components.data.GameConfigurationData
+import io.github.jahrim.chess.game.service.components.data.{GameConfigurationData, MoveData, PieceData, PlayerData, PositionData, PromoteToData}
 import io.github.jahrim.hexarc.architecture.vertx.core.components.Port
 import io.vertx.core.Future
+
 import scala.reflect.ClassTag
 
 trait ChessGamePort extends Port:
-  // Game Manager
   /**
    * Starts a game with the specified [[GameConfigurationData]].
    *
@@ -40,7 +37,7 @@ trait ChessGamePort extends Port:
    * @return a future that completes when the specified player
    *         has joined the specified game
    */
-  def joinGame(gameId: String, player: Player): Future[Unit]
+  def joinGame(gameId: String, player: PlayerData): Future[Unit]
 
   /**
    * @param gameId the id of the specified game
@@ -48,7 +45,7 @@ trait ChessGamePort extends Port:
    * @return a future containing all the possible moves that are available from the
    *         specified position in the specified game
    */
-  def findMoves(gameId: String, position: Position): Future[Set[Move]]
+  def findMoves(gameId: String, position: PositionData): Future[Set[MoveData]]
 
   /**
    * @param gameId the id of the specified game
@@ -56,19 +53,15 @@ trait ChessGamePort extends Port:
    * @return a future that completes when the specified move has been applied
    *         in the specified game
    */
-  def applyMove(gameId: String, move: Move): Future[Unit]
+  def applyMove(gameId: String, move: MoveData): Future[Unit]
 
   /**
    * @param gameId the id of the specified game
-   * @param pawnPosition the position of the pawn to promote
-   * @param promotingPiece the piece to promote the pawn to
+   * @param pawn the piece to promote
+   * @param to the piece to promote the pawn to
    * @return a future containing the piece that the pawn was promoted to
    */
-  def promote[P <: Piece](
-      gameId: String,
-      pawnPosition: Position,
-      promotingPiece: PromotionPiece[P]
-  ): Future[P]
+  def promote[P <: Piece](gameId: String, pawn: PieceData, to: PromoteToData): Future[P]
 
   /**
    * Subscribes an handler to a particular event.
