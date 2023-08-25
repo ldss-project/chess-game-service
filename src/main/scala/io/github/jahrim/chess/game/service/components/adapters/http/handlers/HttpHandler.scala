@@ -1,4 +1,4 @@
-package io.github.jahrim.chess.game.service.components.adapters.http
+package io.github.jahrim.chess.game.service.components.adapters.http.handlers
 
 import io.vertx.core.Handler
 import io.vertx.ext.web

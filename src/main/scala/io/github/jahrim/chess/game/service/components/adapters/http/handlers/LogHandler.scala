@@ -1,6 +1,5 @@
 package io.github.jahrim.chess.game.service.components.adapters.http.handlers
 
-import io.github.jahrim.chess.game.service.components.adapters.http.HttpHandler
 import io.github.jahrim.chess.game.service.components.adapters.http.handlers.LogHandler.*
 import io.vertx.ext.web.RoutingContext
 
