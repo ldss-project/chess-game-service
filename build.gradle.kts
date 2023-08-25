@@ -47,7 +47,12 @@ dependencies {
 
 application {
     mainClass.set(projectInfo.implementationClass)
-    tasks.withType(JavaExec::class.java){ args() }
+    tasks.withType(JavaExec::class.java){
+        properties["statisticsService"]?.apply { args("--statistics-service", this) }
+        properties["httpHost"]?.apply { args("--http-host", this) }
+        properties["httpPort"]?.apply { args("--http-port", this) }
+        properties["allowedOrigins"]?.apply { args("--allowed-origins", this) }
+    }
 }
 
 spotless {
