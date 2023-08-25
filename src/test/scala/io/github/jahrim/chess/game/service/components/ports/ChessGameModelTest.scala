@@ -98,21 +98,21 @@ class ChessGameModelTest extends AbstractTest:
     }
 
     describe("when finding a public game") {
-      it("should let the user known the id of a public game") {
+      it("should let the user know the id of a public game") {
         val publicGameIds: Seq[Id] = Seq.fill(5)(createPublicGame())
         val privateGameIds: Seq[Id] = Seq.fill(5)(createPrivateGame())
         val gameFoundId: Id = chessGameModel.findPublicGame().await.get
         publicGameIds should contain(gameFoundId)
         privateGameIds shouldNot contain(gameFoundId)
       }
-      it("should let the user known that there are no public games registered") {
+      it("should let the user know that there are no public games registered") {
         Seq.fill(5)(createPrivateGame())
         assertThrows[NoAvailableGamesException](chessGameModel.findPublicGame().await.get)
       }
     }
 
     describe("when finding a private game") {
-      it("should let the user known the id of a requested private game") {
+      it("should let the user know the id of a requested private game") {
         val publicGameIds: Seq[Id] = Seq.fill(5)(createPublicGame())
         val privateGameIds: Seq[Id] = Seq.fill(5)(createPrivateGame())
         val requestedGameId: Id = privateGameIds.head
@@ -121,14 +121,14 @@ class ChessGameModelTest extends AbstractTest:
         publicGameIds shouldNot contain(gameFoundId)
       }
       it(
-        "should let the user known that there are no registered private games with the requested id"
+        "should let the user know that there are no registered private games with the requested id"
       ) {
         Seq.fill(5)(createPrivateGame())
         assertThrows[GameNotFoundException](
           chessGameModel.findPrivateGame("NotRegisteredGameId").await.get
         )
       }
-      it("should let the user known that the game with the requested id is already running") {
+      it("should let the user know that the game with the requested id is already running") {
         val privateGameId: Id = makeRunningGame(createPrivateGame())
         val requestedGameId: Id = privateGameId
         assertThrows[GameAlreadyStartedException](
@@ -138,7 +138,7 @@ class ChessGameModelTest extends AbstractTest:
     }
 
     describe("when retrieving the state of a game") {
-      it("should let the user known the state of a registered game") {
+      it("should let the user know the state of a registered game") {
         val gameId: Id = createGame()
         chessGameModel.getState(gameId).await.get shouldEqual
           chessGameModel.games(gameId).getState.await.get
