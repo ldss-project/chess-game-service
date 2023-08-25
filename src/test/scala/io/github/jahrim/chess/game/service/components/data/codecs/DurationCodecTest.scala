@@ -1,49 +1,32 @@
 package io.github.jahrim.chess.game.service.components.data.codecs
 
+import io.github.jahrim.chess.game.service.components.data.codecs.BsonCodecTest
 import io.github.jahrim.chess.game.service.components.data.codecs.DurationCodec.given
-import io.github.jahrim.chess.game.service.components.data.codecs.DurationCodecTest.{
-  time,
-  timeDocument,
-  wrongTimeDocument
-}
-import io.github.jahrim.hexarc.persistence.bson.codecs.{
-  BsonDecoder,
-  BsonDocumentDecoder,
-  BsonDocumentEncoder,
-  BsonEncoder
-}
 import io.github.jahrim.hexarc.persistence.bson.dsl.BsonDSL.{*, given}
-import org.bson.BsonDocument
-import org.bson.conversions.Bson
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
-import test.AbstractTest
 
-class DurationCodecTest extends CodecTest("Duration"):
-  override def decodeCorrectBsonTest(): Unit =
-    val document: BsonDocument = timeDocument
-    val value: Duration = document.as[Duration]
+/** A [[BsonCodecTest]] for [[DurationCodec]]. */
+class DurationCodecTest extends BsonCodecTest(DurationCodecTest)
 
-    assert(value == time)
+/** Companion object of [[DurationCodecTest]]. */
+object DurationCodecTest extends BsonCodecTest.BsonCodecData[Duration]:
+  override def decodeSamples: DecodeSampleIterable = Seq(
+    DecodeSample[Duration](
+      name = "Duration",
+      sample = bson { "value" :: 30L; "unit" :: "MINUTES" },
+      expected = Duration(30, TimeUnit.MINUTES)
+    )
+  )
 
-  override def decodeWrongBsonTest(): Unit =
-    assertThrows[Exception] {
-      val document: BsonDocument = wrongTimeDocument
-      val value: Duration = document.as[Duration]
-    }
-
-  override def encodeTest(): Unit =
-    val document: BsonDocument = time.asBson.asDocument
-    assert(document.require("value").as[Long] == 2L)
-    assert(document.require("unit").as[String] == "MINUTES")
-
-object DurationCodecTest:
-  val time: Duration = Duration(2L, "minutes")
-  val timeDocument: BsonDocument = bson {
-    "value" :: 2L
-    "unit" :: "minutes"
-  }
-  val wrongTimeDocument: BsonDocument = bson {
-    "value" :: 2L
-    "unit" :: "InvalidUnit"
-  }
+  override def wrongDecodeSamples: WrongDecodeSampleIterable = Seq(
+    WrongDecodeSample[Duration](
+      name = "Duration with wrong value",
+      sample = bson { "value" :: 30d; "unit" :: "MINUTES" }
+    ),
+    WrongDecodeSample[Duration](
+      name = "Duration with unknown unit",
+      sample = bson { "value" :: 30L; "unit" :: "UnknownUnit" }
+    )
+  )
