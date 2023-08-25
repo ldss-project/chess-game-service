@@ -1,81 +1,228 @@
 package io.github.jahrim.chess.game.service.components.ports
 
-import io.github.chess.engine.events.Event
-import io.github.chess.engine.model.pieces.{Pawn, Piece, PromotionPiece}
-import io.github.jahrim.chess.game.service.components.data.{GameConfigurationData, MoveData, PieceData, PlayerData, PositionData, PromoteToData}
+import io.github.chess.engine.model.board.Position as LegacyPosition
+import io.github.chess.engine.model.configuration.Player as LegacyPlayer
+import io.github.chess.engine.model.moves.Move as LegacyMove
+import io.github.chess.engine.model.pieces.Piece as LegacyPiece
+import io.github.jahrim.chess.game.service.components.events.ChessGameServiceEvent
+import io.github.jahrim.chess.game.service.components.exceptions.*
+import io.github.jahrim.chess.game.service.components.ports.ChessGamePort.Id
+import io.github.jahrim.chess.game.service.components.ports.model.game.ChessGameServer
+import io.github.jahrim.chess.game.service.components.ports.model.game.state.{
+  GameConfiguration,
+  PromotionChoice,
+  ServerState
+}
 import io.github.jahrim.hexarc.architecture.vertx.core.components.Port
 import io.vertx.core.Future
 
 import scala.reflect.ClassTag
 
+/**
+ * A [[Port]] that handles the configuration, execution and
+ * termination of [[ChessGameServer]]s.
+ */
 trait ChessGamePort extends Port:
   /**
-   * Starts a game with the specified [[GameConfigurationData]].
+   * Create a new [[ChessGameServer]] with the specified [[GameConfiguration]].
    *
-   * @param gameConfiguration the specified [[GameConfigurationData]]
-   * @return a future containing the id of the game.
-   */
-  def createGame(gameConfiguration: GameConfigurationData): Future[String]
-
-  /**
-   * @return a future containing the id of a public game that is
-   *         waiting for players
-   */
-  def findPublicGame(): Future[String]
-
-  /**
-   * @param gameId the specified id of the game
-   * @return a future containing the specified id if a private game is
-   *         bound to it
-   */
-  def findPrivateGame(gameId: String): Future[String]
-
-  // Game
-  /**
-   * @param gameId the id of the specified game
-   * @param player the specified player
-   * @return a future that completes when the specified player
-   *         has joined the specified game
-   */
-  def joinGame(gameId: String, player: PlayerData): Future[Unit]
-
-  /**
-   * @param gameId the id of the specified game
-   * @param position the specified position
-   * @return a future containing all the possible moves that are available from the
-   *         specified position in the specified game
-   */
-  def findMoves(gameId: String, position: PositionData): Future[Set[MoveData]]
-
-  /**
-   * @param gameId the id of the specified game
-   * @param move the specified move
-   * @return a future that completes when the specified move has been applied
-   *         in the specified game
-   */
-  def applyMove(gameId: String, move: MoveData): Future[Unit]
-
-  /**
-   * @param gameId the id of the specified game
-   * @param pawn the piece to promote
-   * @param to the piece to promote the pawn to
-   * @return a future containing the piece that the pawn was promoted to
-   */
-  def promote[P <: Piece](gameId: String, pawn: PieceData, to: PromoteToData): Future[P]
-
-  /**
-   * Subscribes an handler to a particular event.
+   * @param gameConfiguration the specified [[GameConfiguration]].
+   * @return a [[Future]] containing the [[Id Id]] of the
+   *         [[ChessGameServer]] just created.
    *
-   * @param handler a consumer for the specified event
-   * @tparam T type parameter of the event extending the superclass [[Event]]
-   * @return a future containing the id of the subscription
+   *         The [[Future]] succeeds when the [[ChessGameServer]] has
+   *         been created; it fails with a:
+   *         - [[GameIdAlreadyTakenException]]: if the specified
+   *           [[Id Id]] already belongs to one of the registered
+   *           [[ChessGameServer]]s.
    */
-  def subscribe[T <: Event: ClassTag](handler: T => Unit): Future[String]
+  def createGame(gameConfiguration: GameConfiguration): Future[Id]
 
   /**
-   * Cancel the specified subscriptions.
+   * Delete the [[ChessGameServer]] with the specified [[Id Id]].
+   * If the [[ChessGameServer]] is not yet terminated, it will be
+   * stopped before deletion.
    *
-   * @param subscriptionIds the ids of the specified subscriptions
-   * @return a future that completes when the cancellation has completed
+   * @param gameId the specified [[Id Id]].
+   * @return a [[Future]] completing when the [[ChessGameServer]] has
+   *         been successfully deleted. The [[Future]] fails with a:
+   *         - [[GameNotFoundException]]: if the specified [[Id Id]] does
+   *           not belong to any of the registered [[ChessGameServer]]s.
    */
-  def unsubscribe(subscriptionIds: String*): Future[Unit]
+  def deleteGame(gameId: Id): Future[Unit]
+
+  /**
+   * Search for a random public [[ChessGameServer]] that is still awaiting
+   * for players to join.
+   *
+   * @return a [[Future]] containing the [[Id Id]] of a random
+   *         [[ChessGameServer]] that is still waiting for players to join.
+   *
+   *         The [[Future]] completes when such [[ChessGameServer]] is found;
+   *         it fails with a:
+   *         - [[NoAvailableGamesException]]: if no such [[ChessGameServer]]
+   *           is found.
+   */
+  def findPublicGame(): Future[Id]
+
+  /**
+   * Search for a private [[ChessGameServer]] with the specified [[Id Id]]
+   * that is still waiting for players to join.
+   *
+   * @param gameId the specified [[Id Id]].
+   * @return a [[Future]] containing the [[Id Id]] of the requested
+   *         private [[ChessGameServer]] that is still waiting for players
+   *         to join.
+   *
+   *         The [[Future]] completes when such [[ChessGameServer]] is found;
+   *         it fails with a:
+   *         - [[GameNotFoundException]]: if the specified [[Id Id]]
+   *           does not belong to any of the registered [[ChessGameServer]]s;
+   *         - [[GameAlreadyStartedException]]: if a [[ChessGameServer]] with
+   *           the specified [[Id Id]] is found but it has already started.
+   */
+  def findPrivateGame(gameId: Id): Future[Id]
+
+  /**
+   * Retrieve the [[ServerState]] of the [[ChessGameServer]] with the specified
+   * [[Id Id]].
+   *
+   * @param gameId the specified [[Id Id]].
+   * @return a [[Future]] containing the [[ServerState]] of the [[ChessGameServer]]
+   *         with the specified [[Id Id]].
+   *
+   *         The [[Future]] completes when the [[ServerState]] of the specified
+   *         [[ChessGameServer]] has been successfully retrieved; it fails with a:
+   *         - [[GameNotFoundException]]: if the specified [[Id Id]]
+   *           does not belong to any of the registered [[ChessGameServer]]s.
+   */
+  def getState(gameId: Id): Future[ServerState]
+
+  /**
+   * Make the specified [[LegacyPlayer Player]] join the [[ChessGameServer]] with
+   * the specified [[Id Id]].
+   *
+   * @param gameId the specified [[Id Id]].
+   * @param player the specified [[LegacyPlayer Player]].
+   * @return a [[Future]] completing when the specified [[LegacyPlayer Player]]
+   *         has successfully joined the [[ChessGameServer]] with the specified
+   *         [[Id Id]]. The [[Future]] fails with a:
+   *         - [[GameNotFoundException]]: if the specified [[Id Id]]
+   *           does not belong to any of the registered [[ChessGameServer]]s.
+   *         - [[GameNotWaitingForPlayersException]]: if the [[ChessGameServer]]
+   *           with the specified [[Id Id]] is not waiting for players to join
+   *           (e.g. it's already full or terminated...).
+   *         - [[PlayerAlreadyExistingException]]: if a [[LegacyPlayer Player]]
+   *           of the team of the specified [[LegacyPlayer Player]] has already
+   *           joined the [[ChessGameServer]] with the specified [[Id Id]].
+   */
+  def joinGame(gameId: Id, player: LegacyPlayer): Future[Unit]
+
+  /**
+   * Find the [[LegacyMove Move]]s available for the [[LegacyPiece Piece]]
+   * at the specified [[LegacyPosition Position]] within the [[ChessGameServer]]
+   * with the specified [[Id Id]].
+   *
+   * @param gameId   the specified [[Id Id]].
+   * @param position the specified [[LegacyPosition Position]].
+   * @return a [[Future]] containing the [[LegacyMove Move]]s of available for
+   *         the [[LegacyPiece Piece]] at the specified [[LegacyPosition Position]]
+   *         within the [[ChessGameServer]] with the specified [[Id Id]].
+   *
+   *         The [[Future]] completes when such [[LegacyMove Move]]s have been
+   *         evaluated successfully; it fails with a:
+   *         - [[GameNotFoundException]]: if the specified [[Id Id]]
+   *           does not belong to any of the registered [[ChessGameServer]]s.
+   *         - [[GameNotRunningException]]: if the [[ChessGameServer]] with the
+   *           specified [[Id Id]] is not running.
+   *         - [[GameWaitingForPromotionException]]: if the [[ChessGameServer]]
+   *           with the specified [[Id Id]] is running but is waiting for a pawn
+   *           to be promoted.
+   */
+  def findMoves(gameId: Id, position: LegacyPosition): Future[Set[LegacyMove]]
+
+  /**
+   * Apply the specified [[LegacyMove Move]] to the [[ChessGameServer]] with the
+   * specified [[Id Id]].
+   *
+   * @param gameId the specified [[Id Id]].
+   * @param move   the specified [[LegacyMove Move]].
+   * @return a [[Future]] completing when the specified [[LegacyMove Move]]
+   *         has been successfully applied the [[ChessGameServer]] with the
+   *         specified [[Id Id]]. The [[Future]] fails with a:
+   *         - [[GameNotFoundException]]: if the specified [[Id Id]] does not
+   *           belong to any of the registered [[ChessGameServer]]s.
+   *         - [[GameNotRunningException]]: if the [[ChessGameServer]] with the
+   *           specified [[Id Id]] is not running.
+   *         - [[GameWaitingForPromotionException]]: if the [[ChessGameServer]]
+   *           with the specified [[Id Id]] is running but is waiting for a pawn
+   *           to be promoted.
+   */
+  def applyMove(gameId: Id, move: LegacyMove): Future[Unit]
+
+  /**
+   * Promote the pawn currently awaiting for a promotion to the specified
+   * [[PromotionChoice]] within the [[ChessGameServer]] with the specified [[Id Id]].
+   *
+   * @param gameId          the specified [[Id Id]].
+   * @param promotionChoice the specified [[PromotionChoice]].
+   * @return a [[Future]] completing when the pawn currently awaiting for a
+   *         promotion has been successfully promoted to the specified
+   *         [[PromotionChoice]] within the [[ChessGameServer]] with the specified
+   *         [[Id Id]]. The [[Future]] fails with a:
+   *         - [[GameNotFoundException]]: if the specified [[Id Id]] does not
+   *           belong to any of the registered [[ChessGameServer]]s.
+   *         - [[GameNotWaitingForPromotionException]]: if the [[ChessGameServer]]
+   *           with the specified [[Id Id]] is not waiting for a pawn to be promoted.
+   */
+  def promote(gameId: Id, promotionChoice: PromotionChoice): Future[Unit]
+
+  /**
+   * Subscribe to the specified type of [[ChessGameServiceEvent]]s produced by
+   * the [[ChessGameServer]] with the specified [[Id Id]].
+   *
+   * @param gameId  the specified [[Id Id]].
+   * @param handler a consumer for a [[ChessGameServiceEvent]] of the specified
+   *                type. This will be run against every event produced of that
+   *                type.
+   * @tparam E the specified type of [[ChessGameServiceEvent]].
+   * @return a [[Future]] containing the [[Id Id]]s of the subscription just
+   *         registered, so that it will be possible to cancel the subscription
+   *         later on.
+   *
+   *         The [[Future]] completes when the specified event handler has been
+   *         successfully registered to handle the [[ChessGameServiceEvent]]s of
+   *         the specified type produced by the [[ChessGameServer]] with the
+   *         specified [[Id Id]]; it fails with a:
+   *         - [[GameNotFoundException]]: if the specified [[Id Id]]
+   *           does not belong to any of the registered [[ChessGameServer]]s.
+   *         - [[GameTerminatedException]]: if the [[ChessGameServer]] with the
+   *           specified [[Id Id]] has ended.
+   * @note events are organized hierarchically, so that it is possible to subscribe
+   *       to a superclass of events in order to react to all the events that are a
+   *       subclass of that superclass. See [[ChessGameServiceEvent]] for more
+   *       information about the hierarchy of events of this service.
+   */
+  def subscribe[E <: ChessGameServiceEvent: ClassTag](gameId: Id, handler: E => Unit): Future[Id]
+
+  /**
+   * Cancel the subscriptions with the specified subscription [[Id Id]]s
+   * registered within the [[ChessGameServer]] with the specified game [[Id Id]].
+   *
+   * @param gameId          the specified game [[Id Id]].
+   * @param subscriptionIds the specified subscription [[Id Id]]s.
+   * @return a [[Future]] completing when the subscriptions with the specified
+   *         subscription [[Id Id]]s registered within the [[ChessGameServer]] with
+   *         the specified game [[Id Id]] have been successfully cancelled.
+   *         The [[Future]] fails with a:
+   *         - [[GameNotFoundException]]: if the specified [[Id Id]] does not
+   *           belong to any of the registered [[ChessGameServer]]s.
+   *         - [[GameTerminatedException]]: if the [[ChessGameServer]] with the
+   *           specified [[Id Id]] has ended.
+   */
+  def unsubscribe(gameId: Id, subscriptionIds: Id*): Future[Unit]
+
+/** Companion object of [[ChessGamePort]]. */
+object ChessGamePort:
+  /** An identifier for an entity. */
+  type Id = String
