@@ -31,35 +31,35 @@ trait ServerState:
    * @return a new [[ServerState]] obtained by updating the [[ServerSituation]]
    *         of this [[ServerState]] to the specified [[ServerSituation]].
    */
-  def setServerSituation(serverSituation: => ServerSituation): ServerState
+  def setServerSituation(serverSituation: ServerSituation): ServerState
 
   /**
    * @param serverErrorOption the specified error, if any.
    * @return a new [[ServerState]] obtained by updating the latest error
    *         of this [[ServerState]] to the specified error, if any.
    */
-  def setServerError(serverErrorOption: => Option[ChessGameServiceException]): ServerState
+  def setServerError(serverErrorOption: Option[ChessGameServiceException]): ServerState
 
   /**
    * @param subscriptions the specified subscriptions.
    * @return a new [[ServerState]] obtained by updating the subscriptions
    *         of this [[ServerState]] to the specified subscriptions.
    */
-  def setSubscriptions(subscriptions: => SubscriptionMap): ServerState
+  def setSubscriptions(subscriptions: SubscriptionMap): ServerState
 
   /**
    * @param gameState the specified [[GameState]].
    * @return a new [[ServerState]] obtained by updating the [[GameState]]
    *         of this [[ServerState]] to the specified [[GameState]].
    */
-  def setGameState(gameState: => GameState): ServerState
+  def setGameState(gameState: GameState): ServerState
 
   /**
    * @param chessboard the specified [[LegacyChessboard LegacyChessboard]].
    * @return a new [[ServerState]] obtained by updating the [[GameState]]
    *         of this [[ServerState]] as for [[GameState.setChessboard]].
    */
-  def setChessboard(chessboard: => LegacyChessboard): ServerState =
+  def setChessboard(chessboard: LegacyChessboard): ServerState =
     this.setGameState(this.gameState.setChessboard(chessboard))
 
   /**
@@ -67,7 +67,7 @@ trait ServerState:
    * @return a new [[ServerState]] obtained by updating the [[GameState]]
    *         of this [[ServerState]] as for [[GameState.setMoveHistory]].
    */
-  def setMoveHistory(moveHistory: => MoveHistory): ServerState =
+  def setMoveHistory(moveHistory: MoveHistory): ServerState =
     this.setGameState(this.gameState.setMoveHistory(moveHistory))
 
   /**
@@ -75,7 +75,7 @@ trait ServerState:
    * @return a new [[ServerState]] obtained by updating the [[GameState]]
    *         of this [[ServerState]] as for [[GameState.setCurrentTurn]].
    */
-  def setCurrentTurn(currentTurn: => LegacyTeam): ServerState =
+  def setCurrentTurn(currentTurn: LegacyTeam): ServerState =
     this.setGameState(this.gameState.setCurrentTurn(currentTurn))
 
   /**
@@ -83,7 +83,7 @@ trait ServerState:
    * @return a new [[ServerState]] obtained by updating the [[GameState]]
    *         of this [[ServerState]] as for [[GameState.setGameConfiguration]].
    */
-  def setGameConfiguration(gameConfiguration: => GameConfiguration): ServerState =
+  def setGameConfiguration(gameConfiguration: GameConfiguration): ServerState =
     this.setGameState(this.gameState.setGameConfiguration(gameConfiguration))
 
   /**
@@ -91,7 +91,7 @@ trait ServerState:
    * @return a new [[ServerState]] obtained by updating the [[GameState]]
    *         of this [[ServerState]] as for [[GameState.setGameSituation]].
    */
-  def setGameSituation(gameSituation: => GameSituation): ServerState =
+  def setGameSituation(gameSituation: GameSituation): ServerState =
     this.setGameState(this.gameState.setGameSituation(gameSituation))
 
   /**
@@ -99,7 +99,7 @@ trait ServerState:
    * @return a new [[ServerState]] obtained by updating the [[GameState]]
    *         of this [[ServerState]] as for [[GameState.setGameOver]].
    */
-  def setGameOver(gameOver: => GameOver): ServerState =
+  def setGameOver(gameOver: GameOver): ServerState =
     this.setGameState(this.gameState.setGameOver(gameOver))
 
   /**
@@ -107,7 +107,7 @@ trait ServerState:
    * @return a new [[ServerState]] obtained by updating the [[GameState]]
    *         of this [[ServerState]] as for [[GameState.setTimers]].
    */
-  def setTimers(timers: => ChessTimerMap): ServerState =
+  def setTimers(timers: ChessTimerMap): ServerState =
     this.setGameState(this.gameState.setTimers(timers))
 
 /** Companion object of [[ServerState]]. */
@@ -160,15 +160,15 @@ object ServerState:
       override val subscriptions: SubscriptionMap,
       override val gameState: GameState
   ) extends ServerState:
-    override def setServerSituation(serverSituation: => ServerSituation): BasicServerState =
+    override def setServerSituation(serverSituation: ServerSituation): BasicServerState =
       this.update(serverSituation = serverSituation)
     override def setServerError(
-        serverErrorOption: => Option[ChessGameServiceException]
+        serverErrorOption: Option[ChessGameServiceException]
     ): BasicServerState =
       this.update(serverErrorOption = serverErrorOption)
-    override def setSubscriptions(subscriptions: => SubscriptionMap): BasicServerState =
+    override def setSubscriptions(subscriptions: SubscriptionMap): BasicServerState =
       this.update(subscriptions = subscriptions)
-    override def setGameState(gameState: => GameState): BasicServerState =
+    override def setGameState(gameState: GameState): BasicServerState =
       this.update(gameState = gameState)
 
     /**
@@ -180,9 +180,9 @@ object ServerState:
      *         specified state.
      */
     private def update(
-        serverSituation: => ServerSituation = this.serverSituation,
-        serverErrorOption: => Option[ChessGameServiceException] = this.serverErrorOption,
-        subscriptions: => SubscriptionMap = this.subscriptions,
-        gameState: => GameState = this.gameState
+        serverSituation: ServerSituation = this.serverSituation,
+        serverErrorOption: Option[ChessGameServiceException] = this.serverErrorOption,
+        subscriptions: SubscriptionMap = this.subscriptions,
+        gameState: GameState = this.gameState
     ): BasicServerState =
       BasicServerState(serverSituation, serverErrorOption, subscriptions, gameState)
