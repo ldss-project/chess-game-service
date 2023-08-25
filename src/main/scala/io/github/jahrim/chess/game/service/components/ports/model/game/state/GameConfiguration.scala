@@ -57,28 +57,28 @@ trait GameConfiguration:
    * @return a new [[GameConfiguration]] obtained by updating the [[LegacyTimeConstraint LegacyTimeConstraint]]
    *         of this [[GameConfiguration]] to the specified [[LegacyTimeConstraint LegacyTimeConstraint]].
    */
-  def setTimeConstraint(timeConstraint: => LegacyTimeConstraint): GameConfiguration
+  def setTimeConstraint(timeConstraint: LegacyTimeConstraint): GameConfiguration
 
   /**
    * @param gameMode the specified [[LegacyGameMode LegacyGameMode]].
    * @return a new [[GameConfiguration]] obtained by updating the [[LegacyGameMode LegacyGameMode]]
    *         of this [[GameConfiguration]] to the specified [[LegacyGameMode LegacyGameMode]].
    */
-  def setGameMode(gameMode: => LegacyGameMode): GameConfiguration
+  def setGameMode(gameMode: LegacyGameMode): GameConfiguration
 
   /**
    * @param whitePlayer the specified [[LegacyWhitePlayer LegacyWhitePlayer]].
    * @return a new [[GameConfiguration]] obtained by updating the [[LegacyWhitePlayer LegacyWhitePlayer]]
    *         of this [[GameConfiguration]] to the specified [[LegacyWhitePlayer LegacyWhitePlayer]].
    */
-  def setWhitePlayer(whitePlayer: => LegacyWhitePlayer): GameConfiguration
+  def setWhitePlayer(whitePlayer: LegacyWhitePlayer): GameConfiguration
 
   /**
    * @param blackPlayer the specified [[LegacyBlackPlayer LegacyBlackPlayer]].
    * @return a new [[GameConfiguration]] obtained by updating the [[LegacyBlackPlayer LegacyBlackPlayer]]
    *         of this [[GameConfiguration]] to the specified [[LegacyBlackPlayer LegacyBlackPlayer]].
    */
-  def setBlackPlayer(blackPlayer: => LegacyBlackPlayer): GameConfiguration
+  def setBlackPlayer(blackPlayer: LegacyBlackPlayer): GameConfiguration
 
   /**
    * @param gameId the specified [[Id Id]].
@@ -148,12 +148,12 @@ object GameConfiguration:
    * @return a new [[GameConfiguration]].
    */
   def apply(
-      timeConstraint: => LegacyTimeConstraint = DefaultTimeConstraint,
-      gameMode: => LegacyGameMode = DefaultGameMode,
-      whitePlayer: => LegacyWhitePlayer = DefaultWhitePlayer,
-      blackPlayer: => LegacyBlackPlayer = DefaultBlackPlayer,
-      gameId: => Id = DefaultGameId,
-      isPrivate: => Boolean = DefaultIsPrivate
+      timeConstraint: LegacyTimeConstraint = DefaultTimeConstraint,
+      gameMode: LegacyGameMode = DefaultGameMode,
+      whitePlayer: LegacyWhitePlayer = DefaultWhitePlayer,
+      blackPlayer: LegacyBlackPlayer = DefaultBlackPlayer,
+      gameId: Id = DefaultGameId,
+      isPrivate: Boolean = DefaultIsPrivate
   ): GameConfiguration =
     BasicGameConfiguration(
       LegacyGameConfiguration(timeConstraint, gameMode, whitePlayer, blackPlayer),
@@ -169,14 +169,14 @@ object GameConfiguration:
   ) extends GameConfiguration:
     override def gameIdOption: Option[Id] = Some(gameId).filterNot(_ == NoGameId)
     override def setTimeConstraint(
-        timeConstraint: => LegacyTimeConstraint
+        timeConstraint: LegacyTimeConstraint
     ): BasicGameConfiguration =
       this.update(timeConstraint = timeConstraint)
-    override def setGameMode(gameMode: => LegacyGameMode): GameConfiguration =
+    override def setGameMode(gameMode: LegacyGameMode): GameConfiguration =
       this.update(gameMode = gameMode)
-    override def setWhitePlayer(whitePlayer: => LegacyWhitePlayer): GameConfiguration =
+    override def setWhitePlayer(whitePlayer: LegacyWhitePlayer): GameConfiguration =
       this.update(whitePlayer = whitePlayer)
-    override def setBlackPlayer(blackPlayer: => LegacyBlackPlayer): GameConfiguration =
+    override def setBlackPlayer(blackPlayer: LegacyBlackPlayer): GameConfiguration =
       this.update(blackPlayer = blackPlayer)
     override def setGameId(gameId: Id): BasicGameConfiguration =
       this.update(gameId = gameId)
@@ -195,12 +195,12 @@ object GameConfiguration:
      *         specified configurations.
      */
     private def update(
-        timeConstraint: => LegacyTimeConstraint = this.timeConstraint,
-        gameMode: => LegacyGameMode = this.gameMode,
-        whitePlayer: => LegacyWhitePlayer = this.whitePlayerOption.getOrElse(NoWhitePlayer),
-        blackPlayer: => LegacyBlackPlayer = this.blackPlayerOption.getOrElse(NoBlackPlayer),
-        gameId: => Id = this.gameIdOption.getOrElse(GameConfiguration.NoGameId),
-        isPrivate: => Boolean = this.isPrivate
+        timeConstraint: LegacyTimeConstraint = this.timeConstraint,
+        gameMode: LegacyGameMode = this.gameMode,
+        whitePlayer: LegacyWhitePlayer = this.whitePlayerOption.getOrElse(NoWhitePlayer),
+        blackPlayer: LegacyBlackPlayer = this.blackPlayerOption.getOrElse(NoBlackPlayer),
+        gameId: Id = this.gameIdOption.getOrElse(GameConfiguration.NoGameId),
+        isPrivate: Boolean = this.isPrivate
     ): BasicGameConfiguration =
       BasicGameConfiguration(
         LegacyGameConfiguration(timeConstraint, gameMode, whitePlayer, blackPlayer),

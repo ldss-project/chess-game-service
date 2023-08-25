@@ -46,35 +46,35 @@ trait GameState:
    * @return a new [[GameState]] obtained by updating the [[LegacyChessboard LegacyChessboard]]
    *         of this [[GameState]] to the specified [[LegacyChessboard LegacyChessboard]].
    */
-  def setChessboard(chessboard: => LegacyChessboard): GameState
+  def setChessboard(chessboard: LegacyChessboard): GameState
 
   /**
    * @param moveHistory the specified [[MoveHistory]].
    * @return a new [[GameState]] obtained by updating the [[MoveHistory]]
    *         of this [[GameState]] to the specified [[MoveHistory]].
    */
-  def setMoveHistory(moveHistory: => MoveHistory): GameState
+  def setMoveHistory(moveHistory: MoveHistory): GameState
 
   /**
    * @param currentTurn the specified turn.
    * @return a new [[GameState]] obtained by updating the current turn
    *         of this [[GameState]] to the specified turn.
    */
-  def setCurrentTurn(currentTurn: => LegacyTeam): GameState
+  def setCurrentTurn(currentTurn: LegacyTeam): GameState
 
   /**
    * @param gameConfiguration the specified [[GameConfiguration]].
    * @return a new [[GameState]] obtained by updating the [[GameConfiguration]]
    *         of this [[GameState]] to the specified [[GameConfiguration]].
    */
-  def setGameConfiguration(gameConfiguration: => GameConfiguration): GameState
+  def setGameConfiguration(gameConfiguration: GameConfiguration): GameState
 
   /**
    * @param situation the specified [[GameSituation]].
    * @return a new [[GameState]] obtained by updating the [[GameSituation]]
    *         of this [[GameState]] to the specified [[GameSituation]].
    */
-  def setGameSituation(situation: => GameSituation): GameState
+  def setGameSituation(situation: GameSituation): GameState
 
   /**
    * @param gameOver the specified [[GameOver]].
@@ -89,7 +89,7 @@ trait GameState:
    *         [[LegacyPlayer Player]]s of this [[GameState]] to the
    *         specified timers.
    */
-  def setTimers(timers: => ChessTimerMap): GameState
+  def setTimers(timers: ChessTimerMap): GameState
 
 /** Companion object of [[GameState]]. */
 object GameState:
@@ -139,13 +139,13 @@ object GameState:
    * @return a new [[GameState]].
    */
   def apply(
-      chessboard: => LegacyChessboard = DefaultChessboard,
-      moveHistory: => MoveHistory = DefaultHistory,
-      currentTurn: => LegacyTeam = DefaultCurrentTurn,
-      gameConfiguration: => GameConfiguration = DefaultGameConfiguration,
-      gameSituation: => GameSituation = DefaultGameSituation,
-      gameOverOption: => Option[GameOver] = DefaultGameOver,
-      timers: => ChessTimerMap = DefaultTimers
+      chessboard: LegacyChessboard = DefaultChessboard,
+      moveHistory: MoveHistory = DefaultHistory,
+      currentTurn: LegacyTeam = DefaultCurrentTurn,
+      gameConfiguration: GameConfiguration = DefaultGameConfiguration,
+      gameSituation: GameSituation = DefaultGameSituation,
+      gameOverOption: Option[GameOver] = DefaultGameOver,
+      timers: ChessTimerMap = DefaultTimers
   ): GameState =
     BasicGameState(
       LegacyChessGameStatus(chessboard, moveHistory, currentTurn, gameConfiguration.legacy),
@@ -165,19 +165,19 @@ object GameState:
       override val gameOverOption: Option[GameOver],
       override val timers: ChessTimerMap
   ) extends GameState:
-    override def setChessboard(chessboard: => LegacyChessboard): BasicGameState =
+    override def setChessboard(chessboard: LegacyChessboard): BasicGameState =
       this.update(chessboard = chessboard)
-    override def setMoveHistory(moveHistory: => MoveHistory): BasicGameState =
+    override def setMoveHistory(moveHistory: MoveHistory): BasicGameState =
       this.update(moveHistory = moveHistory)
-    override def setCurrentTurn(currentTurn: => LegacyTeam): BasicGameState =
+    override def setCurrentTurn(currentTurn: LegacyTeam): BasicGameState =
       this.update(currentTurn = currentTurn)
-    override def setGameConfiguration(gameConfiguration: => GameConfiguration): BasicGameState =
+    override def setGameConfiguration(gameConfiguration: GameConfiguration): BasicGameState =
       this.update(gameConfiguration = gameConfiguration)
-    override def setGameSituation(gameSituation: => GameSituation): BasicGameState =
+    override def setGameSituation(gameSituation: GameSituation): BasicGameState =
       this.update(gameSituation = gameSituation)
     override def setGameOver(gameOver: GameOver): BasicGameState =
       this.update(gameOverOption = Some(gameOver))
-    override def setTimers(timers: => ChessTimerMap): BasicGameState =
+    override def setTimers(timers: ChessTimerMap): BasicGameState =
       this.update(timers = timers)
 
     /**
@@ -192,13 +192,13 @@ object GameState:
      *         specified state.
      */
     private def update(
-        chessboard: => LegacyChessboard = this.chessboard,
-        moveHistory: => MoveHistory = this.moveHistory,
-        currentTurn: => LegacyTeam = this.currentTurn,
-        gameConfiguration: => GameConfiguration = this.gameConfiguration,
-        gameSituation: => GameSituation = this.gameSituation,
-        gameOverOption: => Option[GameOver] = this.gameOverOption,
-        timers: => ChessTimerMap = this.timers
+        chessboard: LegacyChessboard = this.chessboard,
+        moveHistory: MoveHistory = this.moveHistory,
+        currentTurn: LegacyTeam = this.currentTurn,
+        gameConfiguration: GameConfiguration = this.gameConfiguration,
+        gameSituation: GameSituation = this.gameSituation,
+        gameOverOption: Option[GameOver] = this.gameOverOption,
+        timers: ChessTimerMap = this.timers
     ): BasicGameState =
       BasicGameState(
         LegacyChessGameStatus(chessboard, moveHistory, currentTurn, gameConfiguration.legacy),
