@@ -35,6 +35,7 @@ repositories { mavenCentral() }
 
 dependencies {
     compileOnly(libs.bundles.scalafmt)
+    implementation(libs.tuprolog)
     implementation(libs.scala)
     implementation(libs.scallop)
     implementation(libs.hexarc)
