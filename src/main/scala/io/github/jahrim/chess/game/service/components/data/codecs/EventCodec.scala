@@ -14,7 +14,8 @@ import scala.reflect.{ClassTag, classTag}
 
 /** [[Bson]] codec for [[Event]]. */
 object EventCodec:
-  private val eventsPackage: String = classOf[Event].getPackageName
+  private val eventsPackage: String =
+    classOf[Event].getCanonicalName.stripSuffix(s".${classOf[Event].getSimpleName}")
 
   /** A given [[BsonDecoder]] for [[Event]]. */
   given eventDecoder[E <: Event]: BsonDocumentDecoder[E] = bson =>

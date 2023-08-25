@@ -12,7 +12,10 @@ import org.bson.conversions.Bson
 
 /** [[Bson]] codec for [[Throwable]]. */
 object ChessGameServiceExceptionCodec:
-  private val exceptionsPackage: String = classOf[ChessGameServiceException].getPackageName
+  private val exceptionsPackage: String =
+    classOf[ChessGameServiceException].getCanonicalName.stripSuffix(
+      s".${classOf[ChessGameServiceException].getSimpleName}"
+    )
 
   /** A given [[BsonDecoder]] for [[ChessGameServiceException]]. */
   given chessGameServiceExceptionDecoder[T <: ChessGameServiceException]: BsonDocumentDecoder[T] =
