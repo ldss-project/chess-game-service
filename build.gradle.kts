@@ -8,7 +8,7 @@ private class ProjectInfo {
 
     val artifactGroup: String = "io.github.jahrim.chess"
     val artifactId: String = project.name
-    val implementationClass: String = "main.main"
+    val implementationClass: String = "io.github.jahrim.chess.game.service.main.main"
 
     val license = "The MIT License"
     val licenseUrl = "https://opensource.org/licenses/MIT"
