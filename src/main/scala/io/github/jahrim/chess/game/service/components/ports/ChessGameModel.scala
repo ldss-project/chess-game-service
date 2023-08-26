@@ -3,6 +3,7 @@ package io.github.jahrim.chess.game.service.components.ports
 import io.github.chess.engine.model.board.Position as LegacyPosition
 import io.github.chess.engine.model.configuration.Player as LegacyPlayer
 import io.github.chess.engine.model.moves.Move as LegacyMove
+import io.github.chess.engine.model.game.Team as LegacyTeam
 import io.github.chess.util.scala.id.Id as LegacyId
 import io.github.jahrim.chess.game.service.components.data.codecs.vertx.Codecs as VertxCodecs
 import io.github.jahrim.chess.game.service.components.events.{
@@ -19,12 +20,14 @@ import io.github.jahrim.chess.game.service.components.exceptions.{
 import io.github.jahrim.chess.game.service.components.ports.ChessGameModel.*
 import io.github.jahrim.chess.game.service.components.ports.ChessGamePort.{ChessGameMap, Id}
 import io.github.jahrim.chess.game.service.components.ports.model.game.ChessGameServer
+import io.github.jahrim.chess.game.service.components.ports.model.game.state.GameOver.ResultMap
 import io.github.jahrim.chess.game.service.components.ports.model.game.state.{
   GameConfiguration,
   PromotionChoice,
   ServerSituation,
   ServerState
 }
+import io.github.jahrim.chess.game.service.components.proxies.statistics.StatisticsServiceProxy
 import io.github.jahrim.chess.game.service.util.activity.{ActivityLogging, LoggingFunction}
 import io.github.jahrim.chess.game.service.util.vertx.FutureExtension.*
 import io.github.jahrim.hexarc.architecture.vertx.core.components.PortContext
@@ -33,14 +36,18 @@ import io.vertx.core.{Future, Vertx}
 import scala.reflect.ClassTag
 
 /** Business logic of an [[ChessGamePort]]. */
-class ChessGameModel extends ChessGamePort with ActivityLogging:
+class ChessGameModel(statisticsService: StatisticsServiceProxy = StatisticsServiceProxy.stub)
+    extends ChessGamePort
+    with ActivityLogging:
   /**
    * The [[Vertx]] instance where the asynchronous activities of this
    * service will be executed.
    */
-  given Vertx = context.vertx
+  protected given Vertx = context.vertx
 
   private var _games: ChessGameMap = Map()
+  private def games: ChessGameMap = this._games
+
   override protected def defaultActivityLogger: LoggingFunction = context.log.info(_)
   override protected def init(context: PortContext): Unit =
     activity("Register Vertx codecs")(VertxCodecs.registerInto(context.vertx))
@@ -58,7 +65,7 @@ class ChessGameModel extends ChessGamePort with ActivityLogging:
             .setIsPrivate(gameConfiguration.isPrivate)
             .setTimeConstraint(gameConfiguration.timeConstraint)
             .setGameMode(gameConfiguration.gameMode)
-        this._games.get(gameId) match
+        games.get(gameId) match
           case Some(game) => throw GameIdAlreadyTakenException(gameId)
           case None       => (ChessGameServer(this.context.vertx), configuration)
       }.compose((game, configuration) =>
@@ -66,11 +73,7 @@ class ChessGameModel extends ChessGamePort with ActivityLogging:
           .configure(configuration)
           .compose(_ =>
             game.subscribe[GameOverUpdateEvent](event =>
-              this._games -= game.id
-              event.payload.winner.foreach { winner =>
-                context.log
-                  .info(s"The winner is: $winner") // TODO send result to the statistics service
-              }
+              sendResults(game.id, event.payload.results).compose(_ => deleteGame(game.id))
             )
           )
           .followedBy(_ => game)
@@ -81,7 +84,7 @@ class ChessGameModel extends ChessGamePort with ActivityLogging:
     }
   override def deleteGame(gameId: Id): Future[Unit] =
     asyncActivityFlatten(s"Delete game '$gameId'")(
-      future(this._games.requireWithId(gameId))
+      future(games.requireWithId(gameId))
         .compose(game =>
           if game.state.serverSituation != ServerSituation.Terminated
           then game.stop()
@@ -91,13 +94,13 @@ class ChessGameModel extends ChessGamePort with ActivityLogging:
     )
   override def findPublicGame(): Future[Id] =
     asyncActivity("Find public game")(
-      this._games.getPublic.getAwaiting.values.headOption match
+      games.getPublic.getAwaiting.values.headOption match
         case Some(game) => game.id
         case None       => throw NoAvailableGamesException()
     )
   override def findPrivateGame(gameId: Id): Future[Id] =
     asyncActivity(s"Find private game '$gameId'") {
-      val privateGames: ChessGameMap = this._games.getPrivate
+      val privateGames: ChessGameMap = games.getPrivate
       privateGames.getAwaiting.get(gameId) match
         case Some(game) => game.id
         case None =>
@@ -107,11 +110,11 @@ class ChessGameModel extends ChessGamePort with ActivityLogging:
     }
   override def getState(gameId: Id): Future[ServerState] =
     asyncActivityFlatten(s"Get state of game '$gameId'")(
-      future(this._games.requireWithId(gameId)).compose(_.getState)
+      future(games.requireWithId(gameId)).compose(_.getState)
     )
   override def joinGame(gameId: String, player: LegacyPlayer): Future[Unit] =
     asyncActivityFlatten(s"Join game '$gameId' from player '${player.name}'")(
-      future(this._games.getAwaiting.requireWithId(gameId))
+      future(games.getAwaiting.requireWithId(gameId))
         .compose(game =>
           game
             .join(player)
@@ -124,17 +127,17 @@ class ChessGameModel extends ChessGamePort with ActivityLogging:
     )
   override def findMoves(gameId: String, position: LegacyPosition): Future[Set[LegacyMove]] =
     asyncActivityFlatten(s"Find moves at position '$position' in game '$gameId'")(
-      future(this._games.getRunning.requireWithId(gameId)).compose(_.findMoves(position))
+      future(games.getRunning.requireWithId(gameId)).compose(_.findMoves(position))
     )
   override def applyMove(gameId: String, move: LegacyMove): Future[Unit] =
     asyncActivityFlatten(s"Apply move '$move' in game '$gameId'")(
-      future(this._games.getRunning.requireWithId(gameId)).compose(_.applyMove(move))
+      future(games.getRunning.requireWithId(gameId)).compose(_.applyMove(move))
     )
   override def promote(gameId: String, promotionChoice: PromotionChoice): Future[Unit] =
     asyncActivityFlatten(
       s"Promote pawn to '$promotionChoice' in game '$gameId'"
     )(
-      future(this._games.getRunning.requireWithId(gameId))
+      future(games.getRunning.requireWithId(gameId))
         .compose(_.promote(promotionChoice))
     )
   override def subscribe[E <: ChessGameServiceEvent: ClassTag](
@@ -142,14 +145,37 @@ class ChessGameModel extends ChessGamePort with ActivityLogging:
       handler: E => Unit
   ): Future[Id] =
     asyncActivityFlatten(s"Subscribe to event ${Event.addressOf[E]} in game '$gameId'")(
-      future(this._games.requireWithId(gameId)).compose(_.subscribe[E](handler))
+      future(games.requireWithId(gameId)).compose(_.subscribe[E](handler))
     )
   override def unsubscribe(gameId: Id, subscriptionIds: Id*): Future[Unit] =
     asyncActivityFlatten(
       s"Cancel subscriptions {#${subscriptionIds.mkString(",#")}} in game '$gameId'"
     )(
-      future(this._games.requireWithId(gameId)).compose(_.unsubscribe(subscriptionIds*))
+      future(games.requireWithId(gameId)).compose(_.unsubscribe(subscriptionIds*))
     )
+
+  /**
+   * Send the specified results of the [[ChessGameServer]] with the specified [[Id Id]]
+   * to the statistics service.
+   *
+   * @param gameId the specified [[Id Id]].
+   * @param results the specified results.
+   * @return a [[Future]] completing when the results of the [[ChessGameServer]] with the
+   *         specified [[Id Id]] have been successfully sent to the statistics service.
+   */
+  private def sendResults(gameId: String, results: ResultMap): Future[Unit] =
+    asyncActivityFlatten(s"Send the results of game '$gameId' to the statistics service") {
+      future(games.requireWithId(gameId))
+        .followedBy(game =>
+          LegacyTeam.values.foreach(team =>
+            game.configuration
+              .playerOption(team)
+              .map(_.name)
+              .filter(_ != GameConfiguration.GuestPlayerName)
+              .foreach(username => statisticsService.addNewScore(username, results.get(team)))
+          )
+        )
+    }
 
 /** Companion object of [[ChessGameModel]]. */
 object ChessGameModel:

@@ -100,16 +100,22 @@ object GameConfiguration:
    * The value of a missing [[LegacyWhitePlayer LegacyWhitePlayer]] in a
    * [[GameConfiguration]].
    */
-  private val NoWhitePlayer: LegacyWhitePlayer = LegacyWhitePlayer("")
+  val NoWhitePlayer: LegacyWhitePlayer = LegacyWhitePlayer("")
 
   /**
    * The value of a missing [[LegacyBlackPlayer LegacyBlackPlayer]] in a
    * [[GameConfiguration]].
    */
-  private val NoBlackPlayer: LegacyBlackPlayer = LegacyBlackPlayer("")
+  val NoBlackPlayer: LegacyBlackPlayer = LegacyBlackPlayer("")
+
+  /**
+   * The name of a guest [[LegacyPlayer LegacyPlayer]] in a
+   * [[GameConfiguration]].
+   */
+  val GuestPlayerName: String = "_"
 
   /** The value of a missing game [[Id Id]] in a [[GameConfiguration]]. */
-  private val NoGameId: String = ""
+  val NoGameId: String = ""
 
   /** The default configuration for the time mode of a chess game. */
   val DefaultTimeConstraint: LegacyTimeConstraint = LegacyTimeConstraint.NoLimit
