@@ -68,7 +68,9 @@ class PlayerConnectionHandler(context: AdapterContext[ChessGamePort]) extends We
                         bson {
                           "methodCall" :# {
                             "method" :: "GetState"
-                            "output" :: serverState
+                            "output" :# {
+                              "serverState" :: serverState
+                            }
                           }
                         }
                       )
@@ -83,7 +85,9 @@ class PlayerConnectionHandler(context: AdapterContext[ChessGamePort]) extends We
                         bson {
                           "methodCall" :# {
                             "method" :: "FindMoves"
-                            "output" :: moves.toSeq
+                            "output" :# {
+                              "moves" :: moves.toSeq
+                            }
                           }
                         }
                       )
