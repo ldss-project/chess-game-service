@@ -6,7 +6,7 @@ import io.github.chess.engine.model.moves.Move as LegacyMove
 import io.github.chess.engine.model.pieces.Piece as LegacyPiece
 import io.github.jahrim.chess.game.service.components.events.ChessGameServiceEvent
 import io.github.jahrim.chess.game.service.components.exceptions.*
-import io.github.jahrim.chess.game.service.components.ports.ChessGamePort.Id
+import io.github.jahrim.chess.game.service.components.ports.ChessGamePort.{ChessGameMap, Id}
 import io.github.jahrim.chess.game.service.components.ports.model.game.ChessGameServer
 import io.github.jahrim.chess.game.service.components.ports.model.game.state.{
   GameConfiguration,
@@ -23,6 +23,18 @@ import scala.reflect.ClassTag
  * termination of [[ChessGameServer]]s.
  */
 trait ChessGamePort extends Port:
+  /**
+   * Retrieve a [[ChessGameMap ChessGameMap]] of the [[ChessGameServer]]s
+   * registered in this service.
+   *
+   * @return a [[Future]] containing a [[ChessGameMap ChessGameMap]] of
+   *         the [[ChessGameServer]]s registered in this service.
+   *
+   *         The [[Future]] completes when the [[ChessGameServer]]s
+   *         registered in this service have been successfully retrieved.
+   */
+  def getGames: Future[ChessGameMap]
+
   /**
    * Create a new [[ChessGameServer]] with the specified [[GameConfiguration]].
    *
@@ -226,3 +238,6 @@ trait ChessGamePort extends Port:
 object ChessGamePort:
   /** An identifier for an entity. */
   type Id = String
+
+  /** A map from game [[Id Id]]s to [[ChessGameServer]]s. */
+  type ChessGameMap = Map[Id, ChessGameServer]

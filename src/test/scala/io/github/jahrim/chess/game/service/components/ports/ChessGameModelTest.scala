@@ -44,14 +44,14 @@ class ChessGameModelTest extends AbstractTest:
   describe("The model of a ChessGamePort") {
     describe("when created") {
       it("should have no chess game registered") {
-        chessGameModel.games shouldBe empty
+        chessGameModel.getGames.await.get shouldBe empty
       }
     }
 
     describe("when creating a new game") {
       it("should register the game created") {
         val createdGameId: Id = chessGameModel.createGame(GameConfiguration.default).await.get
-        chessGameModel.games.keys should contain(createdGameId)
+        chessGameModel.getGames.await.get.keys should contain(createdGameId)
       }
       it("should allow the user to create a game with a custom configuration") {
         val customConfiguration: GameConfiguration = GameConfiguration(gameId = "CustomId")
@@ -60,7 +60,7 @@ class ChessGameModelTest extends AbstractTest:
           chessGameModel.getState(createdGameId).await.get.gameState.gameConfiguration
 
         createdGameId shouldEqual customConfiguration.gameIdOption.get
-        chessGameModel.games.keys should contain(createdGameId)
+        chessGameModel.getGames.await.get.keys should contain(createdGameId)
         createdGameConfiguration shouldEqual customConfiguration
       }
       it("should forbid the user from creating a game whose id has been already taken") {
@@ -76,14 +76,14 @@ class ChessGameModelTest extends AbstractTest:
     describe("when deleting a game") {
       it("should allow the user to delete a registered game") {
         val createdGameId: Id = createGame()
-        chessGameModel.games.keys should contain(createdGameId)
+        chessGameModel.getGames.await.get.keys should contain(createdGameId)
 
         chessGameModel.deleteGame(createdGameId).await.get
-        chessGameModel.games.keys shouldNot contain(createdGameId)
+        chessGameModel.getGames.await.get.keys shouldNot contain(createdGameId)
       }
       it("should stop the game before deleting it") {
         val createdGameId: Id = createGame()
-        val createdGame: ChessGameServer = chessGameModel.games(createdGameId)
+        val createdGame: ChessGameServer = chessGameModel.getGames.await.get.apply(createdGameId)
         createdGame.getState.await.get.serverSituation shouldNot
           be(Terminated)
         chessGameModel.deleteGame(createdGameId).await.get
@@ -141,7 +141,7 @@ class ChessGameModelTest extends AbstractTest:
       it("should let the user know the state of a registered game") {
         val gameId: Id = createGame()
         chessGameModel.getState(gameId).await.get shouldEqual
-          chessGameModel.games(gameId).getState.await.get
+          chessGameModel.getGames.await.get.apply(gameId).getState.await.get
       }
       it("should forbid the user from knowing the state of a non-registered game") {
         assertThrows[GameNotFoundException](
@@ -224,7 +224,7 @@ class ChessGameModelTest extends AbstractTest:
       it("should let the user promote a pawn in a registered game") {
         val gameId: Id = makeRunningGame(createGame())
         GameRecording("A2A4", "B7B5", "A4B5", "B8C6", "B5B6", "C6B8", "B6B7", "B8C6", "B7B8")
-          .apply(chessGameModel.games(gameId))
+          .apply(chessGameModel.getGames.await.get.apply(gameId))
         interactionTest(gameId, _.gameState.chessboard)(
           before =>
             before shouldEqual LegacyChessboard {
@@ -302,9 +302,9 @@ class ChessGameModelTest extends AbstractTest:
     describe("when a game ends") {
       it("should remove the game from the registered games") {
         val gameId: Id = makeRunningGame(createGame())
-        GameRecording("F2F3", "E7E6", "G2G4")(chessGameModel.games(gameId))
+        GameRecording("F2F3", "E7E6", "G2G4")(chessGameModel.getGames.await.get.apply(gameId))
         chessGameModel.applyMove(gameId, "D8H4").await.get
-        chessGameModel.games.keys shouldNot contain(gameId)
+        chessGameModel.getGames.await.get.keys shouldNot contain(gameId)
       }
     }
   }

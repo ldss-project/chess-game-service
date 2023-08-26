@@ -43,6 +43,11 @@ class BasicChessGameServer(val vertx: Vertx)
     with BasicChessGameServerEventManager
     with Logging
     with ActivityLogging:
+  /**
+   * The [[Vertx]] instance where the asynchronous activities of this
+   * server will be executed.
+   */
+  given Vertx = vertx
 
   protected var _state: ServerState = ServerState.default
   private val _timerManager: LegacyTimerManager = LegacyTimerManager()
@@ -173,17 +178,19 @@ class BasicChessGameServer(val vertx: Vertx)
       }
     ).onFailure(failure => serverError << failure)
 
+  /** Change the player currently in control of the chessboard in this chess game. */
   private def switchTurn(): Unit =
     activity("Switch Turn")(
       onlyIfRunning {
         this._timerManager.restart(state.gameState.currentTurn)
         currentTurn << state.gameState.currentTurn.oppositeTeam
-        analyzeBoard()
+        analyzeChessboard()
       }
     )
 
-  private def analyzeBoard(): Unit =
-    activity("Analyze board")(
+  /** Analyze the chessboard searching for any particular situation. */
+  private def analyzeChessboard(): Unit =
+    activity("Analyze chessboard")(
       onlyIfRunning {
         LegacyChessGameAnalyzer.situationOf(state.gameState.legacy) match
           case Some(LegacyChessGameSituation.CheckMate) =>

@@ -17,7 +17,7 @@ import io.github.jahrim.chess.game.service.components.exceptions.{
   NoAvailableGamesException
 }
 import io.github.jahrim.chess.game.service.components.ports.ChessGameModel.*
-import io.github.jahrim.chess.game.service.components.ports.ChessGamePort.Id
+import io.github.jahrim.chess.game.service.components.ports.ChessGamePort.{ChessGameMap, Id}
 import io.github.jahrim.chess.game.service.components.ports.model.game.ChessGameServer
 import io.github.jahrim.chess.game.service.components.ports.model.game.state.{
   GameConfiguration,
@@ -28,23 +28,25 @@ import io.github.jahrim.chess.game.service.components.ports.model.game.state.{
 import io.github.jahrim.chess.game.service.util.activity.{ActivityLogging, LoggingFunction}
 import io.github.jahrim.chess.game.service.util.vertx.FutureExtension.*
 import io.github.jahrim.hexarc.architecture.vertx.core.components.PortContext
-import io.vertx.core.Future
+import io.vertx.core.{Future, Vertx}
 
 import scala.reflect.ClassTag
 
 /** Business logic of an [[ChessGamePort]]. */
 class ChessGameModel extends ChessGamePort with ActivityLogging:
-  private var _games: ChessGameMap = Map()
+  /**
+   * The [[Vertx]] instance where the asynchronous activities of this
+   * service will be executed.
+   */
+  given Vertx = context.vertx
 
+  private var _games: ChessGameMap = Map()
   override protected def defaultActivityLogger: LoggingFunction = context.log.info(_)
   override protected def init(context: PortContext): Unit =
     activity("Register Vertx codecs")(VertxCodecs.registerInto(context.vertx))
 
-  /**
-   * @return a [[ChessGameMap]] of the games registered in this service.
-   * @note internal use only.
-   */
-  def games: ChessGameMap = this._games
+  override def getGames: Future[ChessGameMap] =
+    asyncActivity("Retrieve games") { this._games }
 
   override def createGame(gameConfiguration: GameConfiguration): Future[Id] =
     asyncActivityFlatten(s"Create game with id: ${gameConfiguration.gameIdOption}") {
@@ -64,7 +66,7 @@ class ChessGameModel extends ChessGamePort with ActivityLogging:
           .configure(configuration)
           .compose(_ =>
             game.subscribe[GameOverUpdateEvent](event =>
-              deleteGame(game.id)
+              this._games -= game.id
               event.payload.winner.foreach { winner =>
                 context.log
                   .info(s"The winner is: $winner") // TODO send result to the statistics service
@@ -151,9 +153,6 @@ class ChessGameModel extends ChessGamePort with ActivityLogging:
 
 /** Companion object of [[ChessGameModel]]. */
 object ChessGameModel:
-  /** A map from game [[Id]]s to chess games. */
-  private type ChessGameMap = Map[Id, ChessGameServer]
-
   extension (self: ChessGameMap) {
 
     /** @return a [[ChessGameMap]] of the public chess games in this [[ChessGameMap]]. */
