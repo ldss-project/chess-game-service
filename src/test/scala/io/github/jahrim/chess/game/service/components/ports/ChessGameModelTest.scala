@@ -14,7 +14,7 @@ import io.github.jahrim.chess.game.service.components.exceptions.{
   GameNotFoundException,
   NoAvailableGamesException
 }
-import io.github.jahrim.chess.game.service.components.ports.ChessGamePort.Id
+import io.github.jahrim.chess.game.service.components.ports.ChessGamePort.{ChessGameMap, Id}
 import io.github.jahrim.chess.game.service.components.ports.GameRecording.{*, given}
 import io.github.jahrim.chess.game.service.components.ports.model.game.state.{
   GameConfiguration,
@@ -26,7 +26,7 @@ import io.github.jahrim.chess.game.service.components.ports.model.game.ChessGame
 import io.github.jahrim.chess.game.service.components.ports.{ChessGameModel, ChessGamePort}
 import io.github.jahrim.hexarc.architecture.vertx.core.dsl.Deployment
 import io.github.jahrim.hexarc.architecture.vertx.core.dsl.VertxDSL.*
-import io.vertx.core.{Promise, Vertx}
+import io.vertx.core.{Future, Promise, Vertx}
 import test.AbstractTest
 
 /** A test for [[ChessGameModel]]. */
@@ -304,7 +304,8 @@ class ChessGameModelTest extends AbstractTest:
         val gameId: Id = makeRunningGame(createGame())
         GameRecording("F2F3", "E7E6", "G2G4")(chessGameModel.getGames.await.get.apply(gameId))
         chessGameModel.applyMove(gameId, "D8H4").await.get
-        chessGameModel.getGames.await.get.keys shouldNot contain(gameId)
+        pollForProperty(!_.contains(gameId)).await
+          .getOrElse(fail(s"Game '$gameId' was not deleted."))
       }
     }
   }
@@ -384,7 +385,7 @@ class ChessGameModelTest extends AbstractTest:
    *                    after the interaction with the [[ChessGameServer]].
    * @tparam S the type of the values extracted from the [[ServerState]].
    */
-  protected def interactionTest[S](gameId: Id, mapper: ServerState => S = identity)(
+  private def interactionTest[S](gameId: Id, mapper: ServerState => S = identity)(
       before: S => Unit,
       interaction: => Unit,
       after: S => Unit
@@ -392,3 +393,18 @@ class ChessGameModelTest extends AbstractTest:
     before(mapper(chessGameModel.getState(gameId).await.get))
     interaction
     after(mapper(chessGameModel.getState(gameId).await.get))
+
+  /**
+   * Poll for the [[ChessGameServer]]s of the chess game service until
+   * the specified property is satisfied.
+   *
+   * @param predicate the predicate checking for the specified property.
+   * @return a [[Future]] completing when the specified property is
+   *         satisfied.
+   */
+  private def pollForProperty(predicate: ChessGameMap => Boolean): Future[Unit] =
+    chessGameModel.getGames
+      .map[Boolean](games => predicate(games))
+      .compose(property =>
+        if property then Future.succeededFuture() else pollForProperty(predicate)
+      )

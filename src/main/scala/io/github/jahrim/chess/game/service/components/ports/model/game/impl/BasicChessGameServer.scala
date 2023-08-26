@@ -47,7 +47,7 @@ class BasicChessGameServer(val vertx: Vertx)
    * The [[Vertx]] instance where the asynchronous activities of this
    * server will be executed.
    */
-  given Vertx = vertx
+  protected given Vertx = vertx
 
   protected var _state: ServerState = ServerState.default
   private val _timerManager: LegacyTimerManager = LegacyTimerManager()
