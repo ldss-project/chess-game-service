@@ -39,7 +39,7 @@ dependencies {
     implementation(libs.scala)
     implementation(libs.scallop)
     implementation(libs.hexarc)
-    implementation(libs.vertx.web)
+    implementation(libs.bundles.vertx.web)
     implementation(libs.chess.engine)
     testImplementation(libs.scalatest)
     testImplementation(libs.scalatestplusjunit)
