@@ -7,6 +7,7 @@ import io.github.chess.engine.model.configuration.{
 }
 import io.github.chess.engine.model.game.Team as LegacyTeam
 import io.github.jahrim.chess.game.service.components.data.codecs.LegacyTeamCodec.given
+import io.github.jahrim.chess.game.service.components.ports.model.game.state.GameConfiguration
 import io.github.jahrim.hexarc.persistence.bson.codecs.{
   BsonDecoder,
   BsonDocumentDecoder,
@@ -34,8 +35,16 @@ object LegacyPlayerCodec:
 
   /** A given [[BsonDecoder]] for [[LegacyWhitePlayer LegacyWhitePlayer]]. */
   given legacyWhitePlayerDecoder: BsonDocumentDecoder[LegacyWhitePlayer] = bson =>
-    LegacyWhitePlayer(bson.require("name").as[String])
+    LegacyWhitePlayer(
+      bson("name")
+        .map(_.as[String])
+        .getOrElse(GameConfiguration.GuestPlayerName)
+    )
 
   /** A given [[BsonDecoder]] for [[LegacyBlackPlayer LegacyBlackPlayer]]. */
   given legacyBlackPlayerDecoder: BsonDocumentDecoder[LegacyBlackPlayer] = bson =>
-    LegacyBlackPlayer(bson.require("name").as[String])
+    LegacyBlackPlayer(
+      bson("name")
+        .map(_.as[String])
+        .getOrElse(GameConfiguration.GuestPlayerName)
+    )

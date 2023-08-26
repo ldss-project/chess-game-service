@@ -3,6 +3,7 @@ package io.github.jahrim.chess.game.service.main
 import io.github.chess.engine.model.board.{File, Rank}
 import io.github.jahrim.chess.game.service.components.adapters.http.ChessGameHttpAdapter
 import io.github.jahrim.chess.game.service.components.ports.{ChessGameModel, ChessGamePort}
+import io.github.jahrim.chess.game.service.components.proxies.statistics.StatisticsServiceProxy
 import io.github.jahrim.hexarc.architecture.vertx.core.dsl.VertxDSL.*
 import io.vertx.core.Vertx
 import io.vertx.core.http.HttpServerOptions
@@ -13,12 +14,19 @@ import org.rogach.scallop.*
 @main def main(args: String*): Unit =
   val arguments: Args = Args(args)
 
-  DeploymentGroup.deploySingle(Vertx.vertx()) {
+  val vertx: Vertx = Vertx.vertx()
+
+  DeploymentGroup.deploySingle(vertx) {
     new Service:
       name = "ChessGameService"
 
       new Port[ChessGamePort]:
-        model = ChessGameModel( /* TODO pass a statistics proxy */ )
+        model = ChessGameModel(
+          statisticsService = StatisticsServiceProxy(
+            serviceHost = arguments.statisticsService(),
+            vertx = vertx
+          )
+        )
 
         new Adapter(
           adapter = ChessGameHttpAdapter(
