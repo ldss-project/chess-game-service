@@ -5,6 +5,7 @@ import org.bson.conversions.Bson
 /** [[Bson]] codecs of the chess game service. */
 object Codecs:
   export ChessGameServiceExceptionCodec.given
+  export StatisticsServiceExceptionCodec.given
   export ChessTimerMapCodec.given
   export DurationCodec.given
   export EventCodec.given
