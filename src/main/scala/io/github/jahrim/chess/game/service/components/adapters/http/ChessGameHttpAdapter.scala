@@ -22,6 +22,12 @@ import org.bson.{BsonDocument, BsonValue}
 import scala.jdk.CollectionConverters.{SeqHasAsJava, SetHasAsJava}
 import scala.util.Try
 
+/**
+ * An [[Adapter]] that enables http communication with a [[ChessGamePort]] of a service.
+ *
+ * @param httpOptions the specified http options.
+ * @param allowedOrigins a sequence of sites that are allowed to use the api of this service.
+ */
 class ChessGameHttpAdapter(
     httpOptions: HttpServerOptions = HttpServerOptions().setHost("localhost").setPort(8080),
     allowedOrigins: Seq[String] = Seq()
@@ -93,7 +99,7 @@ class ChessGameHttpAdapter(
       .subRouter(
         SockJSHandler
           .create(context.vertx)
-          .socketHandler(PlayerConnectionHandler(context.api))
+          .socketHandler(PlayerConnectionHandler(context))
       )
 
     context.vertx
