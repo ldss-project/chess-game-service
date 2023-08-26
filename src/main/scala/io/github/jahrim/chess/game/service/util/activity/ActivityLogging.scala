@@ -2,7 +2,7 @@ package io.github.jahrim.chess.game.service.util.activity
 
 import io.github.jahrim.chess.game.service.util.vertx.FutureExtension.future
 import io.github.jahrim.hexarc.logging.Loggers
-import io.vertx.core.Future
+import io.vertx.core.{Future, Vertx}
 
 import scala.util.{Failure, Success, Try}
 
@@ -63,7 +63,7 @@ trait ActivityLogging:
   def asyncActivity[T](
       activityName: String,
       activityLogger: LoggingFunction = defaultActivityLogger
-  )(activity: => T): Future[T] =
+  )(activity: => T)(using Vertx): Future[T] =
     future(this.activity(activityName, activityLogger)(activity))
 
   /**
@@ -76,7 +76,7 @@ trait ActivityLogging:
   def asyncActivityFlatten[T](
       activityName: String,
       activityLogger: LoggingFunction = defaultActivityLogger
-  )(activity: => Future[T]): Future[T] =
+  )(activity: => Future[T])(using Vertx): Future[T] =
     future(activityLogger(s"Started: $activityName."))
       .compose(_ => activity)
       .onSuccess(_ => activityLogger(s"Completed: $activityName."))
