@@ -141,27 +141,32 @@ class BasicChessGameServer(val vertx: Vertx)
     asyncActivity(s"Apply move '$move'")(
       onlyIfRunning {
         onlyIfNotWaitingForPromotion {
-          chessboard << {
-            val chessBoard = state.gameState.chessboard.movePiece(move.from, move.to)
-            move match
-              case castlingMove: LegacyCastlingMove =>
-                chessBoard.movePiece(castlingMove.rookFromPosition, castlingMove.rookToPosition)
-              case enPassantMove: LegacyEnPassantMove =>
-                chessBoard.removePiece(enPassantMove.capturedPiecePosition)
-              case _ => chessBoard
-          }
-          moveHistory << {
-            state.gameState.chessboard.pieces.get(move.to) match
-              case Some(piece) => state.gameState.moveHistory.save(piece, move)
-              case None        => state.gameState.moveHistory
-          }
+          state.gameState.chessboard
+            .pieces(state.gameState.currentTurn)
+            .get(move.from)
+            .foreach(_ =>
+              chessboard << {
+                val chessBoard = state.gameState.chessboard.movePiece(move.from, move.to)
+                move match
+                  case castlingMove: LegacyCastlingMove =>
+                    chessBoard.movePiece(castlingMove.rookFromPosition, castlingMove.rookToPosition)
+                  case enPassantMove: LegacyEnPassantMove =>
+                    chessBoard.removePiece(enPassantMove.capturedPiecePosition)
+                  case _ => chessBoard
+              }
+              moveHistory << {
+                state.gameState.chessboard.pieces.get(move.to) match
+                  case Some(piece) => state.gameState.moveHistory.save(piece, move)
+                  case None        => state.gameState.moveHistory
+              }
 
-          LegacyChessGameAnalyzer.promotion(state.gameState.legacy) match
-            case Some(promotingPawnPosition) =>
-              this._timerManager.stop(state.gameState.currentTurn)
-              gameSituation << GameSituation.Promotion(promotingPawnPosition)
-            case _ =>
-              switchTurn()
+              LegacyChessGameAnalyzer.promotion(state.gameState.legacy) match
+                case Some(promotingPawnPosition) =>
+                  this._timerManager.stop(state.gameState.currentTurn)
+                  gameSituation << GameSituation.Promotion(promotingPawnPosition)
+                case _ =>
+                  switchTurn()
+            )
         }
       }
     ).onFailure(failure => serverError << failure)
