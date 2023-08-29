@@ -99,7 +99,7 @@ class BasicChessGameServer(val vertx: Vertx)
               timer << (
                 state.gameState.currentTurn,
                 Duration(
-                  currentTimer.timeRemaining.seconds,
+                  currentTimer.timeRemaining.minutes * 60 + currentTimer.timeRemaining.seconds,
                   TimeUnit.SECONDS
                 )
               )
