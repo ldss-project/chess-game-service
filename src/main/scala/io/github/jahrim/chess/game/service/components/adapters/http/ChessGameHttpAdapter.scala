@@ -64,11 +64,12 @@ class ChessGameHttpAdapter(
     router
       .post("/game")
       .handler(message =>
-        val gameConfiguration =
-          message.requireBodyParam("gameConfiguration").as[GameConfiguration]
+        val gameConfiguration = message.requireBodyParam("gameConfiguration").as[GameConfiguration]
         context.api
           .createGame(gameConfiguration)
-          .map(gameId => bson { "connection" :# { "websocket" :: s"/game/connect/$gameId" } })
+          .map(gameId =>
+            bson { "connection" :# { "websocket" :: s"/game/connect/$gameId/websocket" } }
+          )
           .onSuccess(bson => message.sendBson(HttpResponseStatus.OK, bson))
           .onFailure(message.sendException)
       )
@@ -78,7 +79,9 @@ class ChessGameHttpAdapter(
       .handler(message =>
         context.api
           .findPublicGame()
-          .map(gameId => bson { "connection" :# { "websocket" :: s"/game/connect/$gameId" } })
+          .map(gameId =>
+            bson { "connection" :# { "websocket" :: s"/game/connect/$gameId/websocket" } }
+          )
           .onSuccess(bson => message.sendBson(HttpResponseStatus.OK, bson))
           .onFailure(message.sendException)
       )
@@ -89,7 +92,9 @@ class ChessGameHttpAdapter(
         val gameId = message.requirePathParam("gameId")
         context.api
           .findPrivateGame(gameId)
-          .map(gameId => bson { "connection" :# { "websocket" :: s"/game/connect/$gameId" } })
+          .map(gameId =>
+            bson { "connection" :# { "websocket" :: s"/game/connect/$gameId/websocket" } }
+          )
           .onSuccess(bson => message.sendBson(HttpResponseStatus.OK, bson))
           .onFailure(message.sendException)
       )
