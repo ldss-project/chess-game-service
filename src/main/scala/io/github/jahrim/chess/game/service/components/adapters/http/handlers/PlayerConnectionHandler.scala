@@ -8,7 +8,10 @@ import io.github.jahrim.chess.game.service.components.data.codecs.Codecs.given
 import io.github.jahrim.chess.game.service.components.events.*
 import io.github.jahrim.chess.game.service.components.ports.ChessGamePort
 import io.github.jahrim.chess.game.service.components.ports.ChessGamePort.Id
-import io.github.jahrim.chess.game.service.components.ports.model.game.state.PromotionChoice
+import io.github.jahrim.chess.game.service.components.ports.model.game.state.{
+  GameSituation,
+  PromotionChoice
+}
 import io.github.jahrim.hexarc.architecture.vertx.core.components.AdapterContext
 import io.github.jahrim.hexarc.persistence.bson.codecs.{BsonDecoder, BsonEncoder}
 import io.github.jahrim.hexarc.persistence.bson.dsl.BsonDSL.{*, given}
@@ -66,15 +69,23 @@ class PlayerConnectionHandler(context: AdapterContext[ChessGamePort]) extends We
                         bson {
                           "methodCall" :# {
                             "method" :: "GetState"
-                            "output" :# {
-                              "serverState" :: serverState
-                            }
+                            "output" :# { "serverState" :: serverState }
                           }
                         }
                       )
                     )
                 case "JoinGame" =>
-                  context.api.joinGame(gameId, input.require("player").as[LegacyPlayer])
+                  context.api
+                    .joinGame(gameId, input.require("player").as[LegacyPlayer])
+                    .onSuccess(_ =>
+                      websocket.writeBson(
+                        bson {
+                          "methodCall" :# {
+                            "method" :: "JoinGame"
+                          }
+                        }
+                      )
+                    )
                 case "FindMoves" =>
                   context.api
                     .findMoves(gameId, input.require("position").as[LegacyPosition])
@@ -83,20 +94,35 @@ class PlayerConnectionHandler(context: AdapterContext[ChessGamePort]) extends We
                         bson {
                           "methodCall" :# {
                             "method" :: "FindMoves"
-                            "output" :# {
-                              "moves" :: moves.toSeq
-                            }
+                            "output" :# { "moves" :: moves.toSeq }
                           }
                         }
                       )
                     )
                 case "ApplyMove" =>
-                  context.api.applyMove(gameId, input.require("move").as[LegacyMove])
+                  context.api
+                    .applyMove(gameId, input.require("move").as[LegacyMove])
+                    .onSuccess(_ =>
+                      websocket.writeBson(
+                        bson {
+                          "methodCall" :# {
+                            "method" :: "ApplyMove"
+                          }
+                        }
+                      )
+                    )
                 case "Promote" =>
-                  context.api.promote(
-                    gameId,
-                    input.require("promotionChoice").as[PromotionChoice]
-                  )
+                  context.api
+                    .promote(gameId, input.require("promotionChoice").as[PromotionChoice])
+                    .onSuccess(_ =>
+                      websocket.writeBson(
+                        bson {
+                          "methodCall" :# {
+                            "method" :: "Promote"
+                          }
+                        }
+                      )
+                    )
             )
         )
         .closeHandler(_ => context.api.deleteGame(gameId))
