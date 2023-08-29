@@ -5,14 +5,12 @@ import io.github.chess.engine.model.configuration.Player as LegacyPlayer
 import io.github.chess.engine.model.moves.Move as LegacyMove
 import io.github.jahrim.chess.game.service.components.adapters.http.ChessGameHttpAdapter.*
 import io.github.jahrim.chess.game.service.components.data.codecs.Codecs.given
-import io.github.jahrim.chess.game.service.components.events.{
-  ServerStateUpdateEvent,
-  TurnUpdateEvent
-}
+import io.github.jahrim.chess.game.service.components.events.*
 import io.github.jahrim.chess.game.service.components.ports.ChessGamePort
 import io.github.jahrim.chess.game.service.components.ports.ChessGamePort.Id
 import io.github.jahrim.chess.game.service.components.ports.model.game.state.PromotionChoice
 import io.github.jahrim.hexarc.architecture.vertx.core.components.AdapterContext
+import io.github.jahrim.hexarc.persistence.bson.codecs.{BsonDecoder, BsonEncoder}
 import io.github.jahrim.hexarc.persistence.bson.dsl.BsonDSL.{*, given}
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
@@ -25,7 +23,7 @@ import java.nio.charset.StandardCharsets
  * A [[WebsocketHandler]] that handles the connection of a player
  * with a chess game in this service.
  */
-class PlayerConnectionHandler(context: AdapterContext[ChessGamePort]) extends WebsocketHandler {
+class PlayerConnectionHandler(context: AdapterContext[ChessGamePort]) extends WebsocketHandler:
   extension (self: SockJSSocket) {
 
     /**
@@ -107,9 +105,95 @@ class PlayerConnectionHandler(context: AdapterContext[ChessGamePort]) extends We
     def setupServerClientCommunication(): Unit =
       context.api.subscribe[ServerStateUpdateEvent](
         gameId,
-        event => websocket.writeBson(bson { "event" :: event })
+        event =>
+          websocket.writeBson(
+            bson {
+              "event" :: (
+                event match
+                  case e: ChessboardUpdateEvent =>
+                    encodeEventWithPayload[
+                      ChessboardUpdateEvent,
+                      ChessboardUpdateEvent#PayloadType
+                    ](e)
+                  case e: GameOverUpdateEvent =>
+                    encodeEventWithPayload[GameOverUpdateEvent, GameOverUpdateEvent#PayloadType](e)
+                  case e: GameSituationUpdateEvent =>
+                    encodeEventWithPayload[
+                      GameSituationUpdateEvent,
+                      GameSituationUpdateEvent#PayloadType
+                    ](e)
+                  case e: MoveHistoryUpdateEvent =>
+                    encodeEventWithPayload[
+                      MoveHistoryUpdateEvent,
+                      MoveHistoryUpdateEvent#PayloadType
+                    ](e)
+                  case e: WhitePlayerUpdateEvent =>
+                    encodeEventWithPayload[
+                      WhitePlayerUpdateEvent,
+                      WhitePlayerUpdateEvent#PayloadType
+                    ](e)
+                  case e: BlackPlayerUpdateEvent =>
+                    encodeEventWithPayload[
+                      BlackPlayerUpdateEvent,
+                      BlackPlayerUpdateEvent#PayloadType
+                    ](e)
+                  case e: WhiteTimerUpdateEvent =>
+                    encodeEventWithPayload[
+                      WhiteTimerUpdateEvent,
+                      WhiteTimerUpdateEvent#PayloadType
+                    ](e)
+                  case e: BlackTimerUpdateEvent =>
+                    encodeEventWithPayload[
+                      BlackTimerUpdateEvent,
+                      BlackTimerUpdateEvent#PayloadType
+                    ](e)
+                  case e: ServerErrorUpdateEvent =>
+                    encodeEventWithPayload[
+                      ServerErrorUpdateEvent,
+                      ServerErrorUpdateEvent#PayloadType
+                    ](e)
+                  case e: ServerSituationUpdateEvent =>
+                    encodeEventWithPayload[
+                      ServerSituationUpdateEvent,
+                      ServerSituationUpdateEvent#PayloadType
+                    ](e)
+                  case e: SubscriptionUpdateEvent =>
+                    encodeEventWithPayload[
+                      SubscriptionUpdateEvent,
+                      SubscriptionUpdateEvent#PayloadType
+                    ](e)
+                  case e: TurnUpdateEvent =>
+                    encodeEventWithPayload[
+                      TurnUpdateEvent,
+                      TurnUpdateEvent#PayloadType
+                    ](e)
+                  case _ => event.asBson.asDocument
+              )
+            }
+          )
       )
 
     setupClientServerCommunication()
     setupServerClientCommunication()
-}
+
+  /**
+   * Encode the specified [[Event]] with [[Event.Payload Payload]].
+   *
+   * @param event the specified [[Event]] with [[Event.Payload Payload]].
+   * @param bsonDecoder the given [[BsonDecoder]] for the [[Event.Payload Payload]]
+   *                    of the specified [[Event]].
+   * @param bsonEncoder the given [[BsonEncoder]] for the [[Event.Payload Payload]]
+   *                    of the specified [[Event]].
+   * @tparam E the type of the specified [[Event]] with [[Event.Payload Payload]].
+   * @tparam PayloadType the type of the [[Event.Payload Payload]] of the specified
+   *                     [[Event]].
+   * @return a [[BsonDocument]] representing this [[Event]] with [[Event.Payload Payload]].
+   */
+  private def encodeEventWithPayload[
+      E <: Event with Event.Payload[PayloadType],
+      PayloadType
+  ](event: E)(using
+      bsonDecoder: BsonDecoder[PayloadType],
+      bsonEncoder: BsonEncoder[PayloadType]
+  ): BsonDocument =
+    event.asBson(using eventWithPayloadEncoder[E, PayloadType]).asDocument
