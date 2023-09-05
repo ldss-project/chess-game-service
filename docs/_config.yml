@@ -1,0 +1,5 @@
+title: "Chess Game Service"
+description: A service which handles the configuration, execution and termination of chess games.
+theme: just-the-docs
+
+url: https://ldss-project.github.io/chess-game-service

@@ -8,4 +8,6 @@
 
 ---
 
-The service which handles the configuration, execution and termination of chess games.
+A service which handles the configuration, execution and termination of chess games.
+
+See documentation at the [repository webpage](https://ldss-project.github.io/chess-game-service).
