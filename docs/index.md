@@ -45,16 +45,17 @@ In particolare, il servizio definisce due componenti principali:
 
 ### Chess Game Execution
 
-In questa sezione, si descriverà come vengono esposte le funzionalità relative all'esecuzione di una partita di
-scacchi all'interno di questo servizio.
+In questa sezione, si descriverà come sono state implementate ed esposte le funzionalità relative all'esecuzione
+di una partita di scacchi all'interno di questo servizio.
 
 #### Modellazione del dominio
 
 L'esecuzione di una partita di scacchi è gestita da un `ChessGameServer`, ovvero un server di gioco all'interno
-del servizio.
+del servizio. Il `ChessGameServer` è descritto da uno stato, modellato dalla classe `ServerState`.
 
-Il `ChessGameServer` è descritto da uno stato, modellato dalla classe `ServerState`. Il `ServerState` di un
-`ChessGameServer` contiene le seguenti informazioni sul server:
+##### ServerState
+
+Il `ServerState` di un `ChessGameServer` contiene le seguenti informazioni sul server:
 - `serverSituation`: la situazione attuale in cui si trova il `ChessGameServer`, modellata dall'enumerazione
   `ServerSituation`. Una `ServerSituation` può essere uno dei seguenti stati:
     - `NotConfigured`: indica che il `ChessGameServer` è in attesa di essere configurato prima di poter cominciare
@@ -77,11 +78,11 @@ Il `ChessGameServer` è descritto da uno stato, modellato dalla classe `ServerSt
       non è in attesa di giocatori.
     - `GameNotWaitingForPromotionException`: generato se si prova a promuovere un pedone nella partita del
       `ChessGameServer` quando non è in attesa della promozione di un pedone.
-    - `GameTerminatedException`: generato se si prova ad eseguire un azione sul `ChessGameServer` quando è terminato e
+    - `GameTerminatedException`: generato se si prova ad eseguire un'azione sul `ChessGameServer` quando è terminato e
       l'azione richiede che non lo sia.
-    - `GameWaitingForPromotionException`: generato se si prova ad eseguire un azione sul `ChessGameServer` diversa dalla
-      promozione quando è in attesa della promozione di un pedone.
-    - `InternalServerError`: generato a causa di un errore imprevisto nel `ChessGameServer`. Indica un probabile errore
+    - `GameWaitingForPromotionException`: generato se si prova ad eseguire un'azione sul `ChessGameServer` diversa dalla
+      promozione quando è in attesa che un pedone sia promosso.
+    - `InternalServerException`: generato a causa di un errore imprevisto nel `ChessGameServer`. Indica un probabile errore
       d'implementazione all'interno del servizio.
     - `PlayerAlreadyExistingException`: generato se si prova a partecipare al `ChessGameServer` come un giocatore di una
       specifica squadra quando un giocatore di quella squadra è già presente.
@@ -89,6 +90,8 @@ Il `ChessGameServer` è descritto da uno stato, modellato dalla classe `ServerSt
   come una mappa da degli identificatori alle corrispondenti sottoscrizioni, modellate dalla classe `MessageConsumer`
   di [Vertx](https://vertx.io/).
 - `gameState`: lo stato della partita ospitata dal `ChessGameServer`, modellato dalla classe `GameState`.
+
+##### GameState
 
 All'interno del `ServerState` di un `ChessGameServer`, il `GameState` racchiude le seguenti informazioni:
 - `legacy`: una conversione del `GameState` in un formato comprensibile per il
@@ -126,6 +129,8 @@ All'interno del `ServerState` di un `ChessGameServer`, il `GameState` racchiude 
   due giocatori e la resa, modellati rispettivamente dai valori `Checkmate`, `Stalemate`, `Timeout` e `Surrender`.
 - `timers`: indica il tempo rimasto a ciascun giocatore per effettuare le proprie mosse.
 - `gameConfiguration`: la configurazione della partita, modellata dalla classe `GameConfiguration`.
+
+##### GameConfiguration
 
 All'interno del `GameState` di un `ChessGameServer`, la `GameConfiguration` racchiude le seguenti informazioni:
 - `legacy`: una conversione della `GameConfiguration` in un formato comprensibile per il
@@ -272,61 +277,69 @@ La `ChessGamePort` espone le seguenti funzionalità relative al **Chess Game Man
 - `findPrivateGame`: ricerca il `ChessGameServer` privato con un identificatore specificato e, se esiste ed è
   ancora in attesa di giocatori, restituisce il suo identificatore.
 
-# TODO
+L'implementazione della `ChessGamePort` è modellata dal `ChessGameModel`. Oltre ad implementare
+le funzionalità della `ChessGamePort`, il `ChessGameModel` gestisce l'integrazione del servizio
+con uno [statistics-service](https://github.com/ldss-project/statistics-service).
 
-Tali funzionalità sono definite nei termini dei concetti del dominio del servizio.
-In particolare, i modelli relativi a tali concetti sono i seguenti:
-- `Score`: modella un punteggio nel servizio;
-- `UserScore`: modella il punteggio di un utente nel servizio;
-- `UserScoreHistory`: modella le statistiche di un utente nel servizio.
+In maggior dettaglio, il `ChessGameModel` gestisce l'inoltro dei risultati delle partite al
+loro termine, affidandosi a uno `StatisticsServiceProxy`, che funge da _Anti-Corruption Layer_
+verso uno **Statistics Service**. In particolare, alla creazione di una partita, si sottoscrive
+agli eventi relativi al suo termine, quindi invia il risultato della partita allo
+**Statistics Service** alla ricezione di tali eventi.
 
-L'implementazione della `StatisticsPort` è modellata dallo `StatisticsModel`.
-Lo `StatisticsModel` gestisce la persistenza dei dati nel servizio attraverso una
-`PersistentCollection` e per comunicare con la `PersistentCollection` utilizza il
-linguaggio delle query `MongoDBQueryLanguage`. Quindi, implementa tutte le funzionalità
-della `StatisticsPort` attraverso delle opportune query.
+Per quanto riguarda il `ChessGameHttpAdapter` che espone le funzionalità della `ChessGamePort`
+agli utenti del servizio, si è deciso di implementare un server HTTP e Websocket.
+Le rotte definite dal server sono gestite da un insieme di `HttpHandler`, per gestire le
+richieste HTTP, e di `WebsocketHandler`, per gestire le richieste Websocket.
 
-Lo `StatisticsHttpAdapter` e lo `StatisticsModel` possono generare delle eccezioni,
-modellate dalla classe `StatisticsServiceException`. In particolare, l'utente che
-utilizza il servizio potrebbe essere notificato delle seguenti
-`StatisticsServiceException`s:
+Le richieste gestite dagli `HttpHandler` sono quelle relative alla funzionalità del **Chess Game
+Management**, mentre le richieste gestite dai `WebsocketHandler` sono quelle relative alle
+funzionalità della **Chess Game Execution**. In particolare, tra i `WebsocketHandler`, il
+`PlayerConnectionHandler` gestisce la ricezione e l'invio di messaggi tra un giocatore e uno
+specifico `ChessGameServer`.
+
+Il `ChessGameHttpAdapter` e il `ChessGameModel` possono generare delle eccezioni,
+appartenenti alla classe `ChessGameServiceException`. In particolare, oltre alle
+eccezioni dei `ChessGameServer`, l'utente che utilizza il servizio potrebbe essere
+notificato delle seguenti `ChessGameServiceException`s:
+
+- `GameAlreadyStartedException`: indica all'utente che la partita privata da lui richiesta
+  non è in attesa di altri giocatori, ma è già cominciata;
+- `GameIdAlreadyTakenException`: indica all'utente che l'identificatore da lui specificato
+  per creare una nuova partita è già assegnato a un'altra partita in esecuzione nel servizio;
+- `GameNotFoundException`: indica all'utente che l'identificatore da lui specificato non è
+  associato a nessuna partita nel sistema.
 - `MalformedInputException`: indica all'utente che l'input specificato per una certa
   funzionalità da lui richiesta non è corretto;
-- `UserNotFoundException`: indica all'utente che il nome utente da lui specificato non è
-  associato a nessun dato nel sistema.
+- `NoAvailableGamesException`: indica all'utente che nessuna partita pubblica è in attesa di
+  altri giocatori.
 
 ## Verifica
 
-Per verificare il sistema, è stata creata una suite di test manuali su
-[Postman](https://www.postman.com/), in modo da accertarsi che tutte le funzionalità
-esposte dal contratto _REST_ del servizio producessero i risultati attesi.
+Per quanto riguarda le funzionalità relative al **Chess Game Management**, per verificare il sistema
+è stata creata una suite di test manuali su [Postman](https://www.postman.com/), in modo da accertarsi
+che tali funzionalità, esposte dal contratto _REST_ del servizio, producessero i risultati attesi.
 
-In futuro, si dovrà creare degli _unit test_ equivalenti, ma automatici. Per fare ciò,
-sarà necessario approfondire come creare un database [MongoDB](https://www.mongodb.com)
-di tipo _in-memory_ in [Scala](https://scala-lang.org/).
+Invece, per quanto riguarda le funzionalità relative alla **Chess Game Execution**, per verificare il
+sistema è stata creata una suite di test automatici, in modo da accertarsi che un `ChessGameServer`
+risponda correttamente alle interazioni dei giocatori durante lo svolgimento della partita che ospita.
 
 ## Esecuzione
 
 Per eseguire il sistema è disponibile un jar al seguente
-[link](https://github.com/ldss-project/statistics-service/releases).
+[link](https://github.com/ldss-project/chess-game-service/releases).
 
 Per eseguire il jar è sufficiente utilizzare il seguente comando:
 ```shell
-java -jar statistics-service-<version>.jar \
---mongodb-connection MONGODB_CONNECTION_STRING
+java -jar chess-game-service-<version>.jar \
+--statistics-service STATISTICS_SERVICE_HOST
 ```
 
 In particolare, il jar permette di specificare i seguenti argomenti a linea di comando:
-- `--mongodb-connection MONGODB_CONNECTION_STRING`: obbligatorio. Permette di specificare
-  la stringa (`MONGODB_CONNECTION_STRING`) per connettersi all'istanza di
-  [MongoDB](https://www.mongodb.com) che sarà utilizzata dal servizio per memorizzare i propri
-  dati.
-- `--mongodb-database DATABASE_NAME`: opzionale. Permette di indicare il nome del database (`DATABASE_NAME`)
-  all'interno dell'istanza di [MongoDB](https://www.mongodb.com) specificata in cui il servizio memorizzerà i
-  propri dati. Default: `statistics`.
-- `--mongodb-collection COLLECTION_NAME`: opzionale. Permette di indicare il nome della collezione
-  (`COLLECTION_NAME`) all'interno del database [MongoDB](https://www.mongodb.com) specificato in cui il
-  servizio memorizzerà i propri dati. Default: `scores`.
+- `--statistics-service STATISTICS_SERVICE_HOST`: obbligatorio. Permette di specificare
+  il nome dell'host che ospita lo [statistics-service](https://github.com/ldss-project/statistics-service)
+  (`STATISTICS_SERVICE_HOST`) che sarà utilizzato dal servizio per memorizzare i risultati
+  delle partite. Default: `localhost:8082`.
 - `--http-host HOST`: opzionale. Permette di indicare il nome dell'host (`HOST`) su cui sarà esposto il
   contratto _REST_ del servizio. Default: `localhost`.
 - `--http-port PORT`: opzionale. Permette di indicare la porta dell'host (`PORT`) su cui sarà esposto il
@@ -338,6 +351,6 @@ In particolare, il jar permette di specificare i seguenti argomenti a linea di c
 In alternativa, un'immagine per eseguire il jar è stata pubblicata anche su [Docker](https://www.docker.com/).
 Per eseguire il servizio tramite [Docker](https://www.docker.com/) è sufficiente utilizzare il seguente comando:
 ```shell
-docker run -it jahrim/io.github.jahrim.chess.statistics-service:<version> \
---mongodb-connection MONGODB_CONNECTION_STRING
+docker run -it jahrim/io.github.jahrim.chess.chess-game-service:<version> \
+--statistics-service STATISTICS_SERVICE_HOST
 ``````
