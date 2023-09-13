@@ -32,7 +32,6 @@ import io.github.jahrim.chess.game.service.components.exceptions.{
   GameConfiguredException,
   GameNotReadyException,
   GameNotRunningException,
-  GameNotWaitingForPromotionException,
   PlayerAlreadyExistingException
 }
 import io.github.jahrim.chess.game.service.components.ports.GameRecording.given
@@ -129,7 +128,7 @@ class ChessGameServerWaitingForPlayersTest
         assertThrows[GameNotRunningException](chessGameServer.applyMove("B2B3").await.get)
       }
       it("should forbid players from promoting their pieces") {
-        assertThrows[GameNotWaitingForPromotionException](
+        assertThrows[GameNotRunningException](
           chessGameServer.promote(PromotionChoice.Queen).await.get
         )
       }

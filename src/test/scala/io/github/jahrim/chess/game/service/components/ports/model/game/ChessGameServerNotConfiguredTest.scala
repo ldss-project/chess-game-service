@@ -31,8 +31,7 @@ import io.github.chess.engine.model.game.Team as LegacyTeam
 import io.github.jahrim.chess.game.service.components.exceptions.{
   GameNotReadyException,
   GameNotRunningException,
-  GameNotWaitingForPlayersException,
-  GameNotWaitingForPromotionException
+  GameNotWaitingForPlayersException
 }
 import io.github.jahrim.chess.game.service.components.ports.GameRecording.given
 import io.github.jahrim.chess.game.service.components.ports.model.game.AbstractChessGameServerTest
@@ -123,7 +122,7 @@ class ChessGameServerNotConfiguredTest
         assertThrows[GameNotRunningException](chessGameServer.applyMove("B2B3").await.get)
       }
       it("should forbid players from promoting their pieces") {
-        assertThrows[GameNotWaitingForPromotionException](
+        assertThrows[GameNotRunningException](
           chessGameServer.promote(PromotionChoice.Queen).await.get
         )
       }

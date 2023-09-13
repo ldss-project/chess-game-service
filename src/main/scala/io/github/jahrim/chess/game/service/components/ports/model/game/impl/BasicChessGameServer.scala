@@ -196,13 +196,15 @@ class BasicChessGameServer(val vertx: Vertx)
 
   override def promote(promotionChoice: PromotionChoice): Future[Unit] =
     asyncActivity(s"Promote pawn to '$promotionChoice")(
-      onlyIfWaitingForPromotion { promotingPawnPosition =>
-        chessboard <<
-          state.gameState.chessboard.setPiece(
-            promotingPawnPosition,
-            promotionChoice.asPieceOfTeam(state.gameState.currentTurn)
-          )
-        switchTurn()
+      onlyIfRunning {
+        onlyIfWaitingForPromotion { promotingPawnPosition =>
+          chessboard <<
+            state.gameState.chessboard.setPiece(
+              promotingPawnPosition,
+              promotionChoice.asPieceOfTeam(state.gameState.currentTurn)
+            )
+          switchTurn()
+        }
       }
     ).onFailure(failure => serverError << failure)
 

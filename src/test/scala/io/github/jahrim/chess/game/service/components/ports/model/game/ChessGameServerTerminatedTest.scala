@@ -68,7 +68,7 @@ class ChessGameServerTerminatedTest
         assertThrows[GameNotRunningException](chessGameServer.applyMove("B2B3").await.get)
       }
       it("should forbid players from promoting their pieces") {
-        assertThrows[GameNotWaitingForPromotionException](
+        assertThrows[GameNotRunningException](
           chessGameServer.promote(PromotionChoice.Queen).await.get
         )
       }
