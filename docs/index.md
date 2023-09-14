@@ -262,8 +262,11 @@ i `ChessGameServer`, gestendo le interazioni tra i giocatori e le partite a cui 
 In particolare, la `ChessGamePort` espone le stesse funzionalità di un `ChessGameServer`, generalizzandole
 con la possibilità di applicarle a un qualunque `ChessGameServer` tra quelli registrati nel servizio.
 
-Durante la connessione di un giocatore verso uno specifico `ChessGameServer`, la `ChessGamePort` esporrà le
-funzionalità di quel `ChessGameServer` al giocatore, permettendo l'interazione con esso.
+Alla connessione di un giocatore verso uno specifico `ChessGameServer`, il giocatore si sottoscrive
+automaticamente a tutti gli eventi del `ChessGameServer` relativi ai suoi cambiamenti di stato, in
+modo da essere notificato ogni volta che avviene uno di questi cambiamenti. Quindi, durante la
+connessione, la `ChessGamePort` esporrà le funzionalità di quel `ChessGameServer` al giocatore,
+permettendogli di agire sulla partita.
 
 ### Chess Game Management
 
