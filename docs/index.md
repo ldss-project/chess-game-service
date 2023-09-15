@@ -167,7 +167,7 @@ Il `ChessGameServer` espone le seguenti funzionalità per controllare l'esecuzio
   dell'operazione, se sono già stati specificati entrambi i giocatori della partita, il `ChessGameServer` entra nello
   stato `Ready`.
 - `start`: fa cominciare la partita ospitata dal `ChessGameServer`, eventualmente inizializzando i timer relativi ai
-  giocatori e specificando una callback da eseguire ad ogni tick dei timer e allo scadere di un timer.
+  giocatori e specificando una callback da eseguire ad ogni tick dei timer e una da eseguire allo scadere di un timer.
 
   Al termine dell'operazione, il `ChessGameServer` entra nello stato `Running`. Mentre, allo scadere di uno dei timer,
   se presenti, il `ChessGameServer` entra nello stato `Terminated`.
