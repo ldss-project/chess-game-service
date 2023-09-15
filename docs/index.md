@@ -35,7 +35,7 @@ Come si può vedere dal diagramma, l'implementazione del servizio dipende dal fr
 In particolare, il servizio definisce due componenti principali:
 - `ChessGamePort`: definisce le funzionalità del servizio. Tali funzionalità si distinguono in due categorie:
     - **Chess Game Management**: gestiscono la creazione e ricerca delle partite di scacchi nel servizio, oltre
-      che della connessione dei giocatori a tali partite.
+      che la connessione dei giocatori a tali partite.
     - **Chess Game Execution**: gestiscono lo svolgimento di una partita di scacchi.
 - `ChessGameHttpAdapter`: espone alcune delle funzionalità della `ChessGamePort`. In particolare, espone le
   funzionalità relative al **Chess Game Management** attraverso un contratto di tipo _REST_, disponibile al
@@ -123,7 +123,7 @@ All'interno del `ServerState` di un `ChessGameServer`, il `GameState` racchiude 
       è in attesa di essere promosso a un altro pezzo.
 - `gameOver`: indica il risultato della partita, se è terminata. Tale risultato è modellato dalla classe `GameOver`,
   che include il giocatore che ha vinto la partita (se presente), modellato dalla classe legacy `Player`, e la causa
-  della terminazione della partita, modellata dalla classe `GameOverCause`.
+  della terminazione della partita, modellata dalla classe legacy `GameOverCause`.
 
   Le cause della terminazione di una partita includono lo scacco matto, lo stallo, lo scadere del tempo di uno dei
   due giocatori e la resa, modellati rispettivamente dai valori `Checkmate`, `Stalemate`, `Timeout` e `Surrender`.
@@ -272,8 +272,8 @@ permettendogli di agire sulla partita.
 
 La `ChessGamePort` espone le seguenti funzionalità relative al **Chess Game Management**:
 - `getGames`: restituisce la `ChessGameMap` del servizio, ovvero una mappa dagli identificatori delle partite
-  ai server di gioco che le ospitano, chiamati `ChessGameServer`;
-- `createGame`: crea un `ChessGameServer` a partire dalla configurazione della partita, chiamata `GameConfiguration`;
+  ai server di gioco che le ospitano, ovvero i `ChessGameServer`;
+- `createGame`: crea un `ChessGameServer` a partire da una `GameConfiguration`;
 - `deleteGame`: termina ed elimina un `ChessGameServer` dato il suo identificatore;
 - `findPublicGame`: ricerca il primo `ChessGameServer` pubblico ancora in attesa di giocatori e restituisce
   il suo identificatore;
@@ -304,7 +304,7 @@ specifico `ChessGameServer`.
 Il `ChessGameHttpAdapter` e il `ChessGameModel` possono generare delle eccezioni,
 appartenenti alla classe `ChessGameServiceException`. In particolare, oltre alle
 eccezioni dei `ChessGameServer`, l'utente che utilizza il servizio potrebbe essere
-notificato delle seguenti `ChessGameServiceException`s:
+notificato delle seguenti `ChessGameServiceException`:
 
 - `GameAlreadyStartedException`: indica all'utente che la partita privata da lui richiesta
   non è in attesa di altri giocatori, ma è già cominciata;
